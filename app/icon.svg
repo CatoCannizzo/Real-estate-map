@@ -1,0 +1,58 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="50 50 540 540" width="100%" height="100%">
+  <style>
+    :root {
+      color: #0f172a;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        color: #f8fafc;
+      }
+    }
+  </style>
+
+  <!-- Viewfinder Framing Reticle -->
+  <g fill="currentColor">
+    <!-- Top-Left Bracket -->
+    <rect x="83" y="61" width="127" height="14" rx="3" />
+    <rect x="83" y="61" width="14" height="127" rx="3" />
+
+    <!-- Satellite Waypoint Coordinate Dot -->
+    <circle cx="166" cy="143" r="13" />
+
+    <!-- Top-Right Bracket -->
+    <rect x="430" y="61" width="127" height="14" rx="3" />
+    <rect x="543" y="61" width="14" height="113" rx="3" />
+
+    <!-- Bottom-Left Bracket -->
+    <rect x="83" y="565" width="116" height="14" rx="3" />
+    <rect x="83" y="466" width="14" height="113" rx="3" />
+
+    <!-- Bottom-Right Bracket -->
+    <rect x="441" y="565" width="116" height="14" rx="3" />
+    <rect x="543" y="466" width="14" height="113" rx="3" />
+  </g>
+
+  <!-- Geometric Isometric 3D Tower -->
+  <g fill="currentColor">
+    <!-- Top Diamond Roof -->
+    <polygon points="319.5,132 372,165.5 319.5,199.5 267,165.5" />
+
+    <!-- Main Tower Left Facet -->
+    <polygon points="262,175 315,209 315,299 262,260" />
+
+    <!-- Leftmost Pillar Roof Cap -->
+    <polygon points="230,234 252,215 252,251" />
+
+    <!-- Main Tower Right Facet -->
+    <polygon points="324,209 377,175 377,349 324,386" />
+
+    <!-- Left Solid Rectangular Block -->
+    <polygon points="229,246 315,310 315,548 229,496" />
+
+    <!-- Right Roof Cap -->
+    <polygon points="387,306 410,326 387,342" />
+
+    <!-- Bottom-Right Solid Rectangular Cube -->
+    <polygon points="324,397 410,339 410,496 324,548" />
+  </g>
+</svg>

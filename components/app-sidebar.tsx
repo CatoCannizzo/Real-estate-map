@@ -44,9 +44,14 @@ export function AppSidebar() {
       <SidebarHeader className="border-b border-border/60 pb-3">
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton size="lg" className="hover:bg-accent">
-              <div className="flex aspect-square size-9 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                <HouseLogo size={24} />
+            <SidebarMenuButton
+              size="lg"
+              className="hover:bg-accent"
+              render={<Link href="/" />}
+              tooltip="EstateMap"
+            >
+              <div className="flex aspect-square size-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                <HouseLogo tight className="!size-7 text-primary" />
               </div>
               <div className="grid flex-1 text-left text-sm leading-tight">
                 <span className="truncate font-semibold tracking-tight">EstateMap</span>

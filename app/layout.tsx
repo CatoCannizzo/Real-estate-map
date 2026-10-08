@@ -19,7 +19,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "EstateMap | Intelligent Property Discovery",
-  description: "Next-generation real estate mapping, neighborhood discovery, and market analytics.",
+  description: "Next-generation real estate mapping, neighborhood discovery, and market analytics."
 };
 
 export default function RootLayout({

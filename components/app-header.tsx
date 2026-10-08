@@ -41,18 +41,7 @@ export function AppHeader() {
       <div className="flex items-center gap-2">
         {/* Optional SidebarTrigger if sidebar is enabled */}
         <SidebarTrigger className="-ml-1" />
-        <Separator orientation="vertical" className="mr-2 h-4" />
-        <Link href="/" className="flex items-center gap-2.5">
-          <HouseLogo size={28} className="text-primary" />
-          <div className="flex flex-col">
-            <span className="font-semibold text-sm tracking-tight leading-none">
-              EstateMap
-            </span>
-            <span className="text-[10px] text-muted-foreground uppercase font-mono tracking-wider">
-              Discovery Engine
-            </span>
-          </div>
-        </Link>
+        
       </div>
 
       {/* Navigation Menu */}
@@ -67,14 +56,7 @@ export function AppHeader() {
                 <Link href="/map">Interactive Map</Link>
               </NavigationMenuLink>
             </NavigationMenuItem>
-            <NavigationMenuItem>
-              <NavigationMenuLink
-                asChild
-                className={navigationMenuTriggerStyle()}
-              >
-                <Link href="/#featured">Featured Listings</Link>
-              </NavigationMenuLink>
-            </NavigationMenuItem>
+           
           </NavigationMenuList>
         </NavigationMenu>
       </div>
