@@ -31,9 +31,14 @@ import {
   SidebarSeparator,
 } from "@/components/ui/sidebar";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { FractalHouseLogo } from "@/components/logo";
+import { HouseLogo } from "@/components/logo";
+import Link from "next/link";
+import {usePathname} from "next/navigation";
+
 
 export function AppSidebar() {
+  const pathname = usePathname();
+
   return (
     <Sidebar collapsible="icon" className="border-r border-border">
       <SidebarHeader className="border-b border-border/60 pb-3">
@@ -41,7 +46,7 @@ export function AppSidebar() {
           <SidebarMenuItem>
             <SidebarMenuButton size="lg" className="hover:bg-accent">
               <div className="flex aspect-square size-9 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                <FractalHouseLogo size={24} />
+                <HouseLogo size={24} />
               </div>
               <div className="grid flex-1 text-left text-sm leading-tight">
                 <span className="truncate font-semibold tracking-tight">EstateMap</span>
@@ -61,7 +66,7 @@ export function AppSidebar() {
           <SidebarGroupContent>
             <SidebarMenu>
               <SidebarMenuItem>
-                <SidebarMenuButton isActive tooltip="Interactive Map">
+                <SidebarMenuButton render={<Link href="/map" />} isActive={pathname === "/map"} tooltip="Interactive Map">
                   <MapPin className="size-4 text-primary" />
                   <span>Interactive Map</span>
                 </SidebarMenuButton>
