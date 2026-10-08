@@ -15,7 +15,7 @@ interface LogoProps extends React.SVGProps<SVGSVGElement> {
  * - Change applied: Right-most vertical negative space slit removed,
  *   joining the right wing directly to the central tower structure.
  */
-export function FractalHouseLogo({
+export function HouseLogo({
   size = 36,
   className = "",
   withBackground = false,
