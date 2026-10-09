@@ -9,3 +9,4 @@ The goal is to build an interactive, map-first real estate web application—mov
 - **Next.js** & **React**
 - **Mapbox GL** (via `react-map-gl`)
 - **Tailwind CSS** & **shadcn/ui**
+- **Vercel** @ https://real-estate-map-snowy.vercel.app/
