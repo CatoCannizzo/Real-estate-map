@@ -45,8 +45,20 @@ export function AppHeader() {
       </div>
 
       {/* Navigation Menu */}
+
       <div className="hidden lg:flex flex-1 justify-center px-6">
         <NavigationMenu>
+          <NavigationMenuList className="gap-1">
+            <NavigationMenuItem>
+              <NavigationMenuLink
+                asChild
+                className={navigationMenuTriggerStyle()}
+              >
+                <Link href="/">Dashboard</Link>
+              </NavigationMenuLink>
+            </NavigationMenuItem>
+           
+          </NavigationMenuList>
           <NavigationMenuList className="gap-1">
             <NavigationMenuItem>
               <NavigationMenuLink

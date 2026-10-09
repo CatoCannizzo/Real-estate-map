@@ -83,13 +83,13 @@ export function AppSidebar() {
                 </SidebarMenuButton>
               </SidebarMenuItem>
               <SidebarMenuItem>
-                <SidebarMenuButton tooltip="Neighborhood Insights">
+                <SidebarMenuButton tooltip="Neighborhood Insights" className="text-muted-foreground">
                   <Compass className="size-4" />
                   <span>Neighborhoods</span>
                 </SidebarMenuButton>
               </SidebarMenuItem>
               <SidebarMenuItem>
-                <SidebarMenuButton tooltip="Market Trends">
+                <SidebarMenuButton tooltip="Market Trends" className="text-muted-foreground">
                   <TrendingUp className="size-4" />
                   <span>Market Trends</span>
                 </SidebarMenuButton>
@@ -101,7 +101,7 @@ export function AppSidebar() {
         <SidebarSeparator className="my-1" />
 
         {/* Filter Preview Group */}
-        <SidebarGroup>
+        <SidebarGroup className="text-muted-foreground">
           <SidebarGroupLabel className="text-xs font-medium tracking-wider uppercase text-muted-foreground/80">
             Map Filters (Preview)
           </SidebarGroupLabel>
@@ -138,7 +138,7 @@ export function AppSidebar() {
         <SidebarSeparator className="my-1" />
 
         {/* Saved Group */}
-        <SidebarGroup>
+        <SidebarGroup className="text-muted-foreground">
           <SidebarGroupLabel className="text-xs font-medium tracking-wider uppercase text-muted-foreground/80">
             Activity
           </SidebarGroupLabel>
