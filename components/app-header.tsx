@@ -6,7 +6,6 @@ import { usePathname } from "next/navigation";
 import { toast } from "sonner";
 import { Search, Bell, BookmarkPlus, CheckCircle2 } from "lucide-react";
 
-import { HouseLogo } from "@/components/logo";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
 import {
@@ -51,24 +50,22 @@ export function AppHeader() {
           <NavigationMenuList className="gap-1">
             <NavigationMenuItem>
               <NavigationMenuLink
-                asChild
+                render={<Link href="/" />}
+                active={pathname === "/"}
                 className={navigationMenuTriggerStyle()}
               >
-                <Link href="/">Dashboard</Link>
+                Dashboard
               </NavigationMenuLink>
             </NavigationMenuItem>
-           
-          </NavigationMenuList>
-          <NavigationMenuList className="gap-1">
             <NavigationMenuItem>
               <NavigationMenuLink
-                asChild
+                render={<Link href="/map" />}
+                active={pathname === "/map"}
                 className={navigationMenuTriggerStyle()}
               >
-                <Link href="/map">Interactive Map</Link>
+                Interactive Map
               </NavigationMenuLink>
             </NavigationMenuItem>
-           
           </NavigationMenuList>
         </NavigationMenu>
       </div>
