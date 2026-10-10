@@ -1,36 +1,12 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Real Estate Map 🏡
 
-## Getting Started
+This project is being built by [Cato Cannizzo](https://github.com/CatoCannizzo) as part of the 8-week real estate mapping micro-internship led by [@wwwaiser](https://github.com/wwwaiser) ([project details](https://github.com/wwwaiser/real-estate-map-project)).
 
-First, run the development server:
+The goal is to build an interactive, map-first real estate web application—moving past standard listing grids so people can easily explore properties, neighborhoods, and city boundaries on a map.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+## Built With
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
-
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- **Next.js** & **React**
+- **Mapbox GL** (via `react-map-gl`)
+- **Tailwind CSS** & **shadcn/ui**
+- **Vercel** @ https://real-estate-map-snowy.vercel.app/

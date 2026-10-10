@@ -31,17 +31,27 @@ import {
   SidebarSeparator,
 } from "@/components/ui/sidebar";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { FractalHouseLogo } from "@/components/logo";
+import { HouseLogo } from "@/components/logo";
+import Link from "next/link";
+import {usePathname} from "next/navigation";
+
 
 export function AppSidebar() {
+  const pathname = usePathname();
+
   return (
     <Sidebar collapsible="icon" className="border-r border-border">
       <SidebarHeader className="border-b border-border/60 pb-3">
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton size="lg" className="hover:bg-accent">
-              <div className="flex aspect-square size-9 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                <FractalHouseLogo size={24} />
+            <SidebarMenuButton
+              size="lg"
+              className="hover:bg-accent"
+              render={<Link href="/" />}
+              tooltip="EstateMap"
+            >
+              <div className="flex aspect-square size-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                <HouseLogo tight className="!size-7 text-primary" />
               </div>
               <div className="grid flex-1 text-left text-sm leading-tight">
                 <span className="truncate font-semibold tracking-tight">EstateMap</span>
@@ -61,7 +71,7 @@ export function AppSidebar() {
           <SidebarGroupContent>
             <SidebarMenu>
               <SidebarMenuItem>
-                <SidebarMenuButton isActive tooltip="Interactive Map">
+                <SidebarMenuButton render={<Link href="/map" />} isActive={pathname === "/map"} tooltip="Interactive Map">
                   <MapPin className="size-4 text-primary" />
                   <span>Interactive Map</span>
                 </SidebarMenuButton>
@@ -73,13 +83,13 @@ export function AppSidebar() {
                 </SidebarMenuButton>
               </SidebarMenuItem>
               <SidebarMenuItem>
-                <SidebarMenuButton tooltip="Neighborhood Insights">
+                <SidebarMenuButton tooltip="Neighborhood Insights" className="text-muted-foreground">
                   <Compass className="size-4" />
                   <span>Neighborhoods</span>
                 </SidebarMenuButton>
               </SidebarMenuItem>
               <SidebarMenuItem>
-                <SidebarMenuButton tooltip="Market Trends">
+                <SidebarMenuButton tooltip="Market Trends" className="text-muted-foreground">
                   <TrendingUp className="size-4" />
                   <span>Market Trends</span>
                 </SidebarMenuButton>
@@ -91,7 +101,7 @@ export function AppSidebar() {
         <SidebarSeparator className="my-1" />
 
         {/* Filter Preview Group */}
-        <SidebarGroup>
+        <SidebarGroup className="text-muted-foreground">
           <SidebarGroupLabel className="text-xs font-medium tracking-wider uppercase text-muted-foreground/80">
             Map Filters (Preview)
           </SidebarGroupLabel>
@@ -128,7 +138,7 @@ export function AppSidebar() {
         <SidebarSeparator className="my-1" />
 
         {/* Saved Group */}
-        <SidebarGroup>
+        <SidebarGroup className="text-muted-foreground">
           <SidebarGroupLabel className="text-xs font-medium tracking-wider uppercase text-muted-foreground/80">
             Activity
           </SidebarGroupLabel>
