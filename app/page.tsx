@@ -19,13 +19,7 @@ import {
   Compass,
 } from "lucide-react";
 
-import { AppSidebar } from "@/components/app-sidebar";
-import { FractalHouseLogo } from "@/components/logo";
-import {
-  SidebarInset,
-  SidebarProvider,
-  SidebarTrigger,
-} from "@/components/ui/sidebar";
+import { HouseLogo } from "@/components/logo";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -165,109 +159,13 @@ export default function Home() {
   };
 
   return (
-    <SidebarProvider>
-      <AppSidebar />
-      <SidebarInset>
-        {/* --- GLOBAL APPLICATION HEADER --- */}
-        <header className="sticky top-0 z-30 flex h-16 shrink-0 items-center gap-2 border-b border-border/80 bg-background/95 px-4 backdrop-blur-md">
-          <div className="flex items-center gap-2">
-            <SidebarTrigger className="-ml-1" />
-            <Separator orientation="vertical" className="mr-2 h-4" />
-            <div className="flex items-center gap-2.5">
-              <FractalHouseLogo size={28} className="text-primary" />
-              <div className="flex flex-col">
-                <span className="font-semibold text-sm tracking-tight leading-none">
-                  EstateMap
-                </span>
-                <span className="text-[10px] text-muted-foreground uppercase font-mono tracking-wider">
-                  Discovery Engine
-                </span>
-              </div>
-            </div>
-          </div>
-
-          {/* Navigation Menu in Center */}
-          <div className="hidden lg:flex flex-1 justify-center px-6">
-            <NavigationMenu>
-              <NavigationMenuList className="gap-1">
-                <NavigationMenuItem>
-                  <NavigationMenuLink
-                    href="#"
-                    className={navigationMenuTriggerStyle()}
-                  >
-                    Interactive Map
-                  </NavigationMenuLink>
-                </NavigationMenuItem>
-                <NavigationMenuItem>
-                  <NavigationMenuLink
-                    href="#"
-                    className={navigationMenuTriggerStyle()}
-                  >
-                    Featured Listings
-                  </NavigationMenuLink>
-                </NavigationMenuItem>
-                <NavigationMenuItem>
-                  <NavigationMenuLink
-                    href="#"
-                    className={navigationMenuTriggerStyle()}
-                  >
-                    Market Intelligence
-                  </NavigationMenuLink>
-                </NavigationMenuItem>
-                <NavigationMenuItem>
-                  <NavigationMenuLink
-                    href="#"
-                    className={navigationMenuTriggerStyle()}
-                  >
-                    Neighborhoods
-                  </NavigationMenuLink>
-                </NavigationMenuItem>
-              </NavigationMenuList>
-            </NavigationMenu>
-          </div>
-
-          {/* Right Header Actions */}
-          <div className="ml-auto flex items-center gap-2 sm:gap-3">
-            <Button
-              variant="outline"
-              size="sm"
-              className="hidden sm:inline-flex gap-2 text-xs text-muted-foreground font-normal hover:text-foreground"
-              onClick={handleSaveSearch}
-            >
-              <Search className="size-3.5" />
-              <span>Search map area...</span>
-              <kbd className="pointer-events-none rounded border bg-muted px-1.5 font-mono text-[10px] text-muted-foreground">
-                ⌘K
-              </kbd>
-            </Button>
-
-            <Button
-              variant="ghost"
-              size="icon-sm"
-              className="relative text-muted-foreground hover:text-foreground"
-              onClick={handleAlertTrigger}
-            >
-              <Bell className="size-4" />
-              <span className="absolute top-1.5 right-1.5 size-2 rounded-full bg-primary" />
-              <span className="sr-only">Notifications</span>
-            </Button>
-
-            <Separator orientation="vertical" className="h-4 hidden sm:block" />
-
-            <Avatar size="sm">
-              <AvatarFallback className="bg-primary/10 text-primary text-xs font-semibold">
-                CC
-              </AvatarFallback>
-            </Avatar>
-          </div>
-        </header>
-
+        <div className="min-h-screen flex flex-col bg-background">
         {/* --- MAIN DASHBOARD CONTENT AREA --- */}
         <main className="flex-1 space-y-8 p-4 md:p-8 max-w-7xl w-full mx-auto">
           {/* Hero Banner with Geometric Accents */}
           <section className="relative overflow-hidden rounded-2xl border border-border bg-gradient-to-br from-card via-card to-muted/40 p-6 md:p-10 shadow-xs">
             <div className="absolute right-0 top-0 -mt-6 -mr-6 hidden lg:block opacity-[0.06] pointer-events-none">
-              <FractalHouseLogo size={320} />
+              <HouseLogo size={320} />
             </div>
 
             <div className="relative z-10 max-w-2xl space-y-4">
@@ -368,7 +266,7 @@ export default function Home() {
                         >
                           {/* Stylized Architectural Fractal Geometry Graphic */}
                           <div className="absolute inset-0 flex items-center justify-center opacity-40 group-hover:scale-105 transition-transform duration-300">
-                            <FractalHouseLogo
+                            <HouseLogo
                               size={120}
                               className={property.accentColor}
                             />
@@ -520,7 +418,6 @@ export default function Home() {
             </div>
           </section>
         </main>
-      </SidebarInset>
-    </SidebarProvider>
+        </div>
   );
 }

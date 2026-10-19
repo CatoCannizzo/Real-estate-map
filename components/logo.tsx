@@ -3,6 +3,8 @@ import React from "react";
 interface LogoProps extends React.SVGProps<SVGSVGElement> {
   size?: number;
   className?: string;
+  withBackground?: boolean;
+  tight?: boolean;
 }
 
 /**
@@ -15,24 +17,34 @@ interface LogoProps extends React.SVGProps<SVGSVGElement> {
  * - Change applied: Right-most vertical negative space slit removed,
  *   joining the right wing directly to the central tower structure.
  */
-export function FractalHouseLogo({
+export function HouseLogo({
   size = 36,
   className = "",
   withBackground = false,
+  tight = false,
+  viewBox,
   ...props
-}: LogoProps & { withBackground?: boolean }) {
+}: LogoProps) {
+  const defaultViewBox = tight ? "232 211 560 560" : "0 0 1024 1024";
+
   return (
     <svg
       width={size}
       height={size}
-      viewBox="0 0 1024 1024"
+      viewBox={viewBox || defaultViewBox}
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
       className={className}
       {...props}
     >
       {withBackground && (
-        <rect width="1024" height="1024" fill="#37434f" />
+        <rect
+          x={tight ? 232 : 0}
+          y={tight ? 211 : 0}
+          width={tight ? 560 : 1024}
+          height={tight ? 560 : 1024}
+          fill="#37434f"
+        />
       )}
 
       {/* --- Viewfinder Framing Reticle --- */}
