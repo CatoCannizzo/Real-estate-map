@@ -6,6 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
 import { AppHeader } from "@/components/app-header";
+import Providers from "@/components/providers";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -33,16 +34,18 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col bg-background text-foreground">
-        <TooltipProvider>
-          <SidebarProvider>
-            <AppSidebar />
-            <SidebarInset className="flex-1">
-             <AppHeader />
-             {children}
-            </SidebarInset>
-          </SidebarProvider>
-          <Toaster position="bottom-right" richColors />
-        </TooltipProvider>
+        <Providers>
+          <TooltipProvider>
+            <SidebarProvider>
+              <AppSidebar />
+              <SidebarInset className="flex-1">
+               <AppHeader />
+               {children}
+              </SidebarInset>
+            </SidebarProvider>
+            <Toaster position="bottom-right" richColors />
+          </TooltipProvider>
+        </Providers>
       </body>
     </html>
   );
