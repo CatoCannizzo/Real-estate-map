@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import { Popup } from 'react-map-gl/mapbox';
-import type { Property } from './property-type';
+import { Popup } from "react-map-gl/mapbox";
+import type { Property } from "./property-type";
 
 interface PropertyPopupProps {
   property: Property | null;
@@ -18,7 +18,7 @@ export function PropertyPopup({ property, onClose }: PropertyPopupProps) {
       anchor="top"
       onClose={onClose}
       className="text-foreground"
-    //   following attributes are my preference
+      //   following attributes are my preference
       closeButton={false}
       closeOnClick={true}
       maxWidth="320px"
