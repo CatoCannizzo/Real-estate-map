@@ -17,13 +17,13 @@ export function PropertyPopup({ property, onClose }: PropertyPopupProps) {
       longitude={property.longitude}
       anchor="top"
       onClose={onClose}
-      className="text-foreground"
+      className="text-foreground border-2 border-amber-500 bg-white"
       //   following attributes are my preference
       closeButton={false}
       closeOnClick={true}
       maxWidth="320px"
     >
-      <div className="flex flex-col gap-2 p-1">
+      <div className="flex flex-col gap-2 p-1 ">
         <h3 className="font-bold text-base">Property #{property.id}</h3>
         {property.address && (
           <p className="text-xs text-muted-foreground">{property.address}</p>

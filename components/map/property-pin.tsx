@@ -58,8 +58,8 @@ export const PropertyPin = React.memo(function PropertyPin({
         <span
           className={`absolute whitespace-nowrap max-w-[160px] truncate text-[11px] font-semibold px-2 py-0.5 rounded-md shadow-md border transition-all pointer-events-auto ${labelPositionStyles[labelPosition]} ${
             isSelected
-              ? "bg-amber-500 text-white border-amber-300 ring-1 ring-amber-400 z-30"
-              : "bg-background/95 text-foreground border-border/80 backdrop-blur-xs group-hover:border-primary/50 group-hover:bg-background z-20"
+              ? "hidden"
+              : "bg-background/95 text-foreground border-amber-500 border-border/80 backdrop-blur-xs group-hover:border-primary/50 group-hover:bg-background z-20"
           }`}
         >
           {displayName}
