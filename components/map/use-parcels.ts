@@ -12,14 +12,8 @@ export function useParcels() {
   const parcels = useMemo<Property[]>(() => {
     return (data?.parcels?.items ?? [])
       .map((parcel): Property | null => {
-        const lat =
-          typeof parcel.latitude === "string"
-            ? parseFloat(parcel.latitude)
-            : parcel.latitude;
-        const long =
-          typeof parcel.longitude === "string"
-            ? parseFloat(parcel.longitude)
-            : parcel.longitude;
+        const lat = parcel.latitude;
+        const long = parcel.longitude;
         //Check if coords loaded correctly
         if (!lat || !long || isNaN(lat) || isNaN(long)) {
           return null;
