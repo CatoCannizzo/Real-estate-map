@@ -39,3 +39,10 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# data directory (ignore all by default, allowlist tracked subsets)
+/data/*
+!/data/README.md
+!/data/sample/
+
+
