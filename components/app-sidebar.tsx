@@ -33,8 +33,7 @@ import {
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { HouseLogo } from "@/components/logo";
 import Link from "next/link";
-import {usePathname} from "next/navigation";
-
+import { usePathname } from "next/navigation";
 
 export function AppSidebar() {
   const pathname = usePathname();
@@ -54,8 +53,12 @@ export function AppSidebar() {
                 <HouseLogo tight className="!size-7 text-primary" />
               </div>
               <div className="grid flex-1 text-left text-sm leading-tight">
-                <span className="truncate font-semibold tracking-tight">EstateMap</span>
-                <span className="truncate text-xs text-muted-foreground">Geospatial Explorer</span>
+                <span className="truncate font-semibold tracking-tight">
+                  EstateMap
+                </span>
+                <span className="truncate text-xs text-muted-foreground">
+                  Geospatial Explorer
+                </span>
               </div>
             </SidebarMenuButton>
           </SidebarMenuItem>
@@ -71,7 +74,11 @@ export function AppSidebar() {
           <SidebarGroupContent>
             <SidebarMenu>
               <SidebarMenuItem>
-                <SidebarMenuButton render={<Link href="/map" />} isActive={pathname === "/map"} tooltip="Interactive Map">
+                <SidebarMenuButton
+                  render={<Link href="/map" />}
+                  isActive={pathname === "/map"}
+                  tooltip="Interactive Map"
+                >
                   <MapPin className="size-4 text-primary" />
                   <span>Interactive Map</span>
                 </SidebarMenuButton>
@@ -83,13 +90,19 @@ export function AppSidebar() {
                 </SidebarMenuButton>
               </SidebarMenuItem>
               <SidebarMenuItem>
-                <SidebarMenuButton tooltip="Neighborhood Insights" className="text-muted-foreground">
+                <SidebarMenuButton
+                  tooltip="Neighborhood Insights"
+                  className="text-muted-foreground"
+                >
                   <Compass className="size-4" />
                   <span>Neighborhoods</span>
                 </SidebarMenuButton>
               </SidebarMenuItem>
               <SidebarMenuItem>
-                <SidebarMenuButton tooltip="Market Trends" className="text-muted-foreground">
+                <SidebarMenuButton
+                  tooltip="Market Trends"
+                  className="text-muted-foreground"
+                >
                   <TrendingUp className="size-4" />
                   <span>Market Trends</span>
                 </SidebarMenuButton>
@@ -149,7 +162,9 @@ export function AppSidebar() {
                   <Bookmark className="size-4" />
                   <span>Saved Homes</span>
                 </SidebarMenuButton>
-                <SidebarMenuBadge className="text-xs bg-primary/10 text-primary">4</SidebarMenuBadge>
+                <SidebarMenuBadge className="text-xs bg-primary/10 text-primary">
+                  4
+                </SidebarMenuBadge>
               </SidebarMenuItem>
               <SidebarMenuItem>
                 <SidebarMenuButton tooltip="Search Alerts">
@@ -176,7 +191,9 @@ export function AppSidebar() {
               </Avatar>
               <div className="grid flex-1 text-left text-xs leading-tight">
                 <span className="truncate font-medium">Cato Cannizzo</span>
-                <span className="truncate text-muted-foreground">Admin / Developer</span>
+                <span className="truncate text-muted-foreground">
+                  Admin / Developer
+                </span>
               </div>
               <Settings className="ml-auto size-4 text-muted-foreground" />
             </SidebarMenuButton>
