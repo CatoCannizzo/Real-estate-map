@@ -1,14 +1,15 @@
 "use client";
 
-import { useState } from "react";
-import Map, { Source, Layer } from "react-map-gl/mapbox";
+import { useState, useEffect } from "react";
+import Map, { Source, Layer, MapMouseEvent } from "react-map-gl/mapbox";
 import "mapbox-gl/dist/mapbox-gl.css";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { BoundaryLayer } from "./map/property-boundaries";
+import { BoundaryLayer } from "./map/static-boundaries";
+import { ParcelPolygons } from "./map/parcel-polygons";
 import type { Property } from "./map/property-type";
 import { PropertyMarkers } from "./map/property-markers";
 import { PropertyPopup } from "./map/property-popup";
@@ -18,18 +19,39 @@ export default function MapView() {
   const [selectedProperty, setSelectedProperty] = useState<Property | null>(
     null,
   );
+  const [selectedParcelId, setSelectedParcelId] = useState<string | null>(null);
+  const onClick = (event: MapMouseEvent) => {
+    const feature = event.features?.[0];
+    if (feature) {
+      setSelectedParcelId(String(feature.properties?.ID));
+    }
+  };
+  const [hoverParcelId, setHoverParcelId] = useState<string | null>(null);
+
+  const onHover = (event: MapMouseEvent) => {
+    const feature = event.features?.[0];
+    if (feature) {
+      setHoverParcelId(String(feature.properties?.ID));
+    } else {
+      setHoverParcelId(null);
+    }
+  };
+  const [cursor, setCursor] = useState<string>("auto");
+
   //Now loads data from API
   const { parcels, getParcels, loading, error } = useParcels();
 
   //Trigger a toast when error occurs on load
-  const handleLoadParcels = async () => {
-    try {
-      await getParcels();
-    } catch (err) {
+  useEffect(() => {
+    if (error) {
       toast.error("Failed to load parcels", {
-        description: err instanceof Error ? err.message : "An error occurred",
+        description: error.message || "An error occurred",
       });
     }
+  }, [error]);
+
+  const handleLoadParcels = () => {
+    getParcels();
   };
 
   return (
@@ -57,9 +79,15 @@ export default function MapView() {
 
       <Map
         mapboxAccessToken={process.env.NEXT_PUBLIC_MAPBOX_TOKEN}
-        initialViewState={{ latitude: 47.0379, longitude: -122.901, zoom: 12 }}
+        initialViewState={{ latitude: 40.7484, longitude: -73.9857, zoom: 15 }}
         mapStyle="mapbox://styles/mapbox/streets-v12"
+        interactiveLayerIds={["parcel-boundaries-fill"]}
         style={{ width: "100%", height: "100%" }}
+        cursor={cursor}
+        onMouseEnter={() => setCursor("pointer")}
+        onMouseLeave={() => setCursor("auto")}
+        onClick={onClick}
+        onMouseMove={onHover}
       >
         <Source
           id="mapbox-terrain"
@@ -74,6 +102,11 @@ export default function MapView() {
             paint={{ "line-color": "#ff69b4", "line-width": 1 }}
           />
         </Source>{" "}
+        <ParcelPolygons
+          visible={true}
+          selectedId={selectedParcelId}
+          hoverId={hoverParcelId}
+        />
         <BoundaryLayer visible={true} />
         <PropertyMarkers
           properties={parcels}
