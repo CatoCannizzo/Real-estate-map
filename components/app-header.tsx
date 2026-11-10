@@ -23,14 +23,16 @@ export function AppHeader() {
 
   const handleAlertTrigger = () => {
     toast.success("Alert Preferences Activated", {
-      description: "You'll receive real-time notifications for price drops and new nearby listings.",
+      description:
+        "You'll receive real-time notifications for price drops and new nearby listings.",
       icon: <CheckCircle2 className="size-4 text-emerald-500" />,
     });
   };
 
   const handleSaveSearch = () => {
     toast.info("Geographic Search Boundary Saved", {
-      description: "Westlake Hills & Central Core filters saved with radius 15 miles.",
+      description:
+        "Westlake Hills & Central Core filters saved with radius 15 miles.",
       icon: <BookmarkPlus className="size-4 text-primary" />,
     });
   };
@@ -40,7 +42,6 @@ export function AppHeader() {
       <div className="flex items-center gap-2">
         {/* Optional SidebarTrigger if sidebar is enabled */}
         <SidebarTrigger className="-ml-1" />
-        
       </div>
 
       {/* Navigation Menu */}

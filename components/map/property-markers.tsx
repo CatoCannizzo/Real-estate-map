@@ -1,8 +1,8 @@
 // components/map/property-markers.tsx
-import React, { useCallback } from 'react';
-import { Marker } from 'react-map-gl/mapbox';
-import type { Property } from './property-type';
-import { PropertyPin, PinLabelPosition } from './property-pin';
+import React, { useCallback } from "react";
+import { Marker } from "react-map-gl/mapbox";
+import type { Property } from "./property-type";
+import { PropertyPin, PinLabelPosition } from "./property-pin";
 
 interface PropertyMarkersProps {
   properties: Property[];
@@ -47,7 +47,7 @@ const PropertyMarkerItem = React.memo(function PropertyMarkerItem({
 export function PropertyMarkers({
   properties,
   selectedId,
-  labelPosition = 'bottom',
+  labelPosition = "bottom",
   onSelectProperty,
 }: PropertyMarkersProps) {
   return (

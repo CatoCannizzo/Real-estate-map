@@ -9,7 +9,7 @@ interface LogoProps extends React.SVGProps<SVGSVGElement> {
 
 /**
  * Option 2: Geometric Isometric 3D Tower Logo
- * 
+ *
  * Recreated with exact pixel-matched geometry from Option 2:
  * - Viewfinder target lock framing: Top-left bracket with waypoint coordinate,
  *   and bottom baseline brackets.
@@ -95,4 +95,3 @@ export function HouseLogo({
     </svg>
   );
 }
-

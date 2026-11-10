@@ -3,7 +3,6 @@
 import * as React from "react";
 import { toast } from "sonner";
 import {
-  Search,
   Bell,
   SlidersHorizontal,
   Heart,
@@ -20,7 +19,6 @@ import {
 } from "lucide-react";
 
 import { HouseLogo } from "@/components/logo";
-import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -38,14 +36,6 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "@/components/ui/carousel";
-import {
-  NavigationMenu,
-  NavigationMenuItem,
-  NavigationMenuLink,
-  NavigationMenuList,
-  navigationMenuTriggerStyle,
-} from "@/components/ui/navigation-menu";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
 // Sample featured property data for carousel
 const featuredProperties = [
