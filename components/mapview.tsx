@@ -54,6 +54,16 @@ export default function MapView() {
     getParcels();
   };
 
+  interface MapViewState {
+    initialView: {
+      latitude: number;
+      longitude: number;
+      zoom: number;
+    };
+    loadData: boolean;
+    mapboxAccessToken: string;
+  }
+
   return (
     <div className="relative w-full h-full">
       {/* 3. Floating action bar on top of the map */}

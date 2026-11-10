@@ -6,6 +6,7 @@
 - **Raw Full Dataset (`raw/Zoned_Development_Capacity_Layers_2016.geojson`):** 178,897 Seattle parcels with polygon geometry (`esriGeometryPolygon`) and 72 zoning/valuation attributes. Loaded locally into Docker PostgreSQL (`seattle-parcels-postgres` on port `5433`, database `seattle_parcels`, table `parcels`).
 
 ## Filtered Datasets (`processed/` — Untracked)
+See [`processed/DATA_DICTIONARY.md`](processed/DATA_DICTIONARY.md) for the full property catalog, field definitions, and methodology.
 
 1. **Seattle Parks & Green Spaces (`processed/seattle-parks.geojson`)**
    - **Filter:** `land_use_code IN (149, 143, 326, 328, 331, 333)`
