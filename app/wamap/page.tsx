@@ -1,14 +1,20 @@
+"use client";
+
 import MapView from "@/components/mapview";
 
-export const metadata = {
-  title: "EstateMap - Interactive Map",
-  description: "Explore properties on an interactive map.",
+const UW_INITIAL_VIEW = {
+  latitude: 47.6553,
+  longitude: -122.3035,
+  zoom: 15,
 };
 
-export default function MapPage() {
+export default function WaMapPage() {
   return (
     <div className="flex h-full w-full">
-      <MapView />
+      <MapView
+        initialView={UW_INITIAL_VIEW}
+        mapboxAccessToken={process.env.NEXT_PUBLIC_MAPBOX_TOKEN}
+      />
     </div>
   );
 }
