@@ -1,6 +1,6 @@
 import { gql, OperationVariables, TypedDocumentNode } from "@apollo/client";
 
-export interface ParcelItem {
+export interface PropertyItem {
   id: string;
   geometry_geojson: string;
   latitude: number;
@@ -13,28 +13,30 @@ export interface ParcelItem {
   address_unit: string;
 }
 
-export interface ParcelsData {
+export interface PropertiesData {
   parcels: {
-    items: ParcelItem[];
+    items: PropertyItem[];
   };
 }
 // Could add in // geometry_geojson
 
-export const GET_PARCELS: TypedDocumentNode<ParcelsData, OperationVariables> =
-  gql`
-    query GetParcels {
-      parcels {
-        items {
-          id
-          latitude
-          longitude
-          address_zip
-          address_state
-          address_citytown
-          address_street
-          address_street_number
-          address_unit
-        }
+export const GET_PROPERTIES: TypedDocumentNode<
+  PropertiesData,
+  OperationVariables
+> = gql`
+  query GetProperties {
+    parcels {
+      items {
+        id
+        latitude
+        longitude
+        address_zip
+        address_state
+        address_citytown
+        address_street
+        address_street_number
+        address_unit
       }
     }
-  `;
+  }
+`;
