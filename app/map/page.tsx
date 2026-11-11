@@ -3,7 +3,10 @@
 import { useEffect } from "react";
 import { toast } from "sonner";
 import MapView from "@/components/mapview";
-import { PropertyPolygons } from "@/components/map/property-polygons";
+import {
+  PropertyPolygons,
+  PropertyPolygonsProps,
+} from "@/components/map/property-polygons";
 import { PropertyMarkers } from "@/components/map/property-markers";
 import { useGqlProperties } from "@/components/map/use-gql-properties";
 
@@ -13,12 +16,15 @@ const MANHATTAN_INITIAL_VIEW = {
   zoom: 15,
 };
 
-const MANHATTAN_POLYGON_PROPS = {
+const MANHATTAN_POLYGON_PROPS: PropertyPolygonsProps = {
+  sourceType: "vector",
   sourceId: "property-boundaries",
   sourceUrl: "mapbox://svayser.parcel-boundaries",
   sourceLayer: "attom-parcels",
   idProperty: "ID",
   visible: true,
+  minZoom: 15.5,
+  maxZoom: 20,
 };
 
 export default function MapPage() {

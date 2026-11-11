@@ -16,5 +16,5 @@ See [`processed/DATA_DICTIONARY.md`](processed/DATA_DICTIONARY.md) for the full 
    - **Filter:** `uv_name IN ('University District Northwest', 'University Campus', 'Ravenna')`
    - **Scope:** 1,374 parcels across the University District and Ravenna urban villages.
 
-## Sample Dataset (`sample/` — Tracked in Git)
-- **`sample/seattle-udistrict-sample.geojson`:** A random sample of 100 parcels drawn from the U-District & Ravenna dataset for lightweight testing and local development.
+## Sample Dataset (`public/sampleData/` — Tracked in Git)
+- **`/public/sampleData/seattle-udistrict-sample.geojson`:** A random sample of 100 parcels drawn from the U-District & Ravenna dataset for lightweight testing and local development, served statically by Next.js at `/sampleData/seattle-udistrict-sample.geojson`.
