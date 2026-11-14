@@ -1,5 +1,3 @@
-//Hook for mapview and sub components to fetch and manage property data
-//currently returns test data
 import { useState, useEffect } from "react";
 import type { Property } from "./property-type";
 
@@ -9,6 +7,7 @@ const MOCK_PROPERTIES: Property[] = [
   { id: "3", latitude: 47.04, longitude: -122.91, price: 890000 },
 ];
 
+/** Hook for mapview and sub components to fetch and manage property data, currently returns test data */
 export function useProperties() {
   const [properties, setProperties] = useState<Property[]>([]);
   const [isLoading, setIsLoading] = useState(true);

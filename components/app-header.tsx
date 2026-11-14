@@ -16,7 +16,7 @@ import {
   navigationMenuTriggerStyle,
 } from "@/components/ui/navigation-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { SidebarTrigger } from "@/components/ui/sidebar"; // if using sidebar
+import { SidebarTrigger } from "@/components/ui/sidebar";
 
 export function AppHeader() {
   const pathname = usePathname();
@@ -40,7 +40,6 @@ export function AppHeader() {
   return (
     <header className="sticky top-0 z-30 flex h-16 shrink-0 items-center gap-2 border-b border-border/80 bg-background/95 px-4 backdrop-blur-md">
       <div className="flex items-center gap-2">
-        {/* Optional SidebarTrigger if sidebar is enabled */}
         <SidebarTrigger className="-ml-1" />
       </div>
 

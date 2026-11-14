@@ -5,12 +5,14 @@ import { Source, Layer, useMap, type MapMouseEvent } from "react-map-gl/mapbox";
 import type { FeatureCollection } from "geojson";
 
 interface BasePolygonProps {
-  /** Unique identifier passed to the Mapbox `<Source>`. */
+  /** Unique identifier passed to the Mapbox `<Source>` */
   sourceId: string;
-  /** what the source calls uids for each property */
+  /** What the source calls uids for each property */
   idProperty?: string;
-  fillLayerId?: string; // what to call the fill layer if applicable
-  lineLayerId?: string; // what to call the line layer if applicable
+  /** What to call the fill layer if applicable */
+  fillLayerId?: string;
+  /** What to call the line layer if applicable */
+  lineLayerId?: string;
   onSelect?: (id: string | null) => void;
   onHover?: (id: string | null) => void;
   visible?: boolean;

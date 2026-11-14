@@ -80,18 +80,20 @@ export interface PropertyMarkersProps {
   onSelectProperty?: (property: Property | null) => void;
 }
 
-// Memoized individual marker item
+interface PropertyMarkerItemProps {
+  property: Property;
+  isSelected: boolean;
+  labelPosition?: PinLabelPosition;
+  onSelect: (property: Property) => void;
+}
+
+/** Memoized individual marker item */
 const PropertyMarkerItem = React.memo(function PropertyMarkerItem({
   property,
   isSelected,
   labelPosition,
   onSelect,
-}: {
-  property: Property;
-  isSelected: boolean;
-  labelPosition?: PinLabelPosition;
-  onSelect: (property: Property) => void;
-}) {
+}: PropertyMarkerItemProps) {
   const handleClick = useCallback(() => {
     onSelect(property);
   }, [onSelect, property]);
