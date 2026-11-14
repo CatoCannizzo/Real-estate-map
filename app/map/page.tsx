@@ -1,13 +1,9 @@
 "use client";
-
 import { useEffect } from "react";
 import { toast } from "sonner";
-import MapView from "@/components/mapview";
-import {
-  PropertyPolygons,
-  PropertyPolygonsProps,
-} from "@/components/map/property-polygons";
-import { PropertyMarkers } from "@/components/map/property-markers";
+import PropertyExplorer from "@/components/propertyexplorer";
+import { type MapViewProps } from "@/components/mapview";
+import { type PropertyPolygonsProps } from "@/components/map/property-polygons";
 import { useGqlProperties } from "@/components/map/use-gql-properties";
 
 const MANHATTAN_INITIAL_VIEW = {
@@ -23,7 +19,7 @@ const MANHATTAN_POLYGON_PROPS: PropertyPolygonsProps = {
   sourceLayer: "attom-parcels",
   idProperty: "ID",
   visible: true,
-  minZoom: 15.5,
+  minZoom: 10,
   maxZoom: 20,
 };
 
@@ -43,18 +39,21 @@ export default function MapPage() {
     }
   }, [error]);
 
+  const mapviewProps: MapViewProps = {
+    initialView: MANHATTAN_INITIAL_VIEW,
+    mapboxAccessToken: process.env.NEXT_PUBLIC_MAPBOX_TOKEN,
+    loadedCount: gqlProperties.length,
+    loading: isGqlLoading,
+    onLoadData: () => getProperties(),
+  };
+
   return (
-    <div className="flex h-full w-full">
-      <MapView
-        initialView={MANHATTAN_INITIAL_VIEW}
-        mapboxAccessToken={process.env.NEXT_PUBLIC_MAPBOX_TOKEN}
-        loadedCount={gqlProperties.length}
-        loading={isGqlLoading}
-        onLoadData={() => getProperties()}
-      >
-        <PropertyPolygons {...MANHATTAN_POLYGON_PROPS} />
-        <PropertyMarkers properties={gqlProperties} />
-      </MapView>
+    <div className="h-full w-full">
+      <PropertyExplorer
+        mapProps={mapviewProps}
+        polygonProps={MANHATTAN_POLYGON_PROPS}
+        properties={gqlProperties}
+      />
     </div>
   );
 }

@@ -1,16 +1,16 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { Source, Layer, useMap, type MapMouseEvent } from "react-map-gl/mapbox";
 import type { FeatureCollection } from "geojson";
 
 interface BasePolygonProps {
-  sourceId: string; // unique name to pass to mapbox
-  idProperty?: string; // what the source calls uids for each property
+  /** Unique identifier passed to the Mapbox `<Source>`. */
+  sourceId: string;
+  /** what the source calls uids for each property */
+  idProperty?: string;
   fillLayerId?: string; // what to call the fill layer if applicable
   lineLayerId?: string; // what to call the line layer if applicable
-  hoverId?: string | null;
-  selectedId?: string | null;
   onSelect?: (id: string | null) => void;
   onHover?: (id: string | null) => void;
   visible?: boolean;
@@ -31,6 +31,28 @@ export interface GeoJsonPolygonProps extends BasePolygonProps {
 
 export type PropertyPolygonsProps = VectorPolygonProps | GeoJsonPolygonProps;
 
+/**
+ * Renders interactive parcel boundary polygons (fill + outline layers) on a Mapbox map.
+ *
+ * @remarks
+ * - **Uncontrolled Highlight State:** Hover and selection styling are managed
+ *    via Mapbox `feature-state`
+ *   and internal refs rather than React state to avoid re-serializing layer paint properties.
+ * - **Parent Communication:** Emits the clicked or hovered parcel ID upward via
+ *   `onSelect` and `onHover` callbacks.
+ *
+ * @example
+ * ```tsx
+ * <PropertyPolygons
+ *   sourceType="vector"
+ *   sourceId="property-boundaries"
+ *   sourceUrl="mapbox://svayser.parcel-boundaries"
+ *   sourceLayer="attom-parcels"
+ *   idProperty="ID"
+ *   onSelect={(id) => setSelectedId(id)}
+ * />
+ * ```
+ */
 export function PropertyPolygons({
   sourceId,
   idProperty = "id",
@@ -39,30 +61,20 @@ export function PropertyPolygons({
   visible = true,
   minZoom = 11,
   maxZoom = 18,
-  selectedId: externalSelectedId,
-  hoverId: externalHoverId,
   onSelect,
   onHover,
   ...props
 }: PropertyPolygonsProps) {
   const { current: map } = useMap();
-  const [internalSelectedId, setInternalSelectedId] = useState<string | null>(
-    null,
-  );
-  const [internalHoverId, setInternalHoverId] = useState<string | null>(null);
-
-  const isSelectedControlled = externalSelectedId !== undefined;
-  const isHoverControlled = externalHoverId !== undefined;
-
-  const activeSelectedId = isSelectedControlled
-    ? externalSelectedId
-    : internalSelectedId;
-  const activeHoverId = isHoverControlled ? externalHoverId : internalHoverId;
+  const selectedIdRef = useRef<string | null>(null);
+  const hoverIdRef = useRef<string | null>(null);
 
   const isSourceValid =
     props.sourceType === "vector"
       ? Boolean(props.sourceUrl && props.sourceLayer)
       : Boolean(props.data);
+  const sourceLayer =
+    props.sourceType === "vector" ? props.sourceLayer : undefined;
 
   useEffect(() => {
     if (!map || !visible || !isSourceValid || !fillLayerId) return;
@@ -72,9 +84,17 @@ export function PropertyPolygons({
         | undefined;
       if (feature && feature.properties?.[idProperty] !== undefined) {
         const clickedId = String(feature.properties[idProperty]);
-        if (!isSelectedControlled) {
-          setInternalSelectedId(clickedId);
+        if (selectedIdRef.current !== null) {
+          map.removeFeatureState(
+            { source: sourceId, sourceLayer, id: selectedIdRef.current },
+            "selected",
+          );
         }
+        selectedIdRef.current = clickedId;
+        map.setFeatureState(
+          { source: sourceId, sourceLayer, id: clickedId },
+          { selected: true },
+        );
         onSelect?.(clickedId);
       }
     };
@@ -87,9 +107,21 @@ export function PropertyPolygons({
         feature && feature.properties?.[idProperty] !== undefined
           ? String(feature.properties[idProperty])
           : null;
-      if (!isHoverControlled) {
-        setInternalHoverId(hoveredId);
+      if (hoverIdRef.current === hoveredId) return;
+      if (hoverIdRef.current !== null) {
+        map.removeFeatureState(
+          { source: sourceId, sourceLayer, id: hoverIdRef.current },
+          "hover",
+        );
       }
+      hoverIdRef.current = hoveredId;
+      if (hoverIdRef.current !== null) {
+        map.setFeatureState(
+          { source: sourceId, sourceLayer, id: hoverIdRef.current },
+          { hover: true },
+        );
+      }
+
       onHover?.(hoveredId);
     };
 
@@ -99,8 +131,12 @@ export function PropertyPolygons({
 
     const handleMouseLeave = () => {
       map.getCanvas().style.cursor = "";
-      if (!isHoverControlled) {
-        setInternalHoverId(null);
+      if (hoverIdRef.current !== null) {
+        map.removeFeatureState(
+          { source: sourceId, sourceLayer, id: hoverIdRef.current },
+          "hover",
+        );
+        hoverIdRef.current = null;
       }
       onHover?.(null);
     };
@@ -118,11 +154,11 @@ export function PropertyPolygons({
     };
   }, [
     map,
+    sourceId,
+    sourceLayer,
     visible,
     fillLayerId,
     idProperty,
-    isSelectedControlled,
-    isHoverControlled,
     onSelect,
     onHover,
     isSourceValid,
@@ -134,7 +170,7 @@ export function PropertyPolygons({
     <Layer
       id={lineLayerId}
       // Geojson source does not have a source layer, so we only include the key for vector tile sources
-      {...("sourceLayer" in props && { "source-layer": props.sourceLayer })}
+      {...(sourceLayer && { "source-layer": sourceLayer })}
       type="line"
       minzoom={minZoom}
       maxzoom={maxZoom}
@@ -150,25 +186,25 @@ export function PropertyPolygons({
     <Layer
       id={fillLayerId}
       // Geojson source does not have a source layer, so we only include the key for vector tile sources
-      {...("sourceLayer" in props && { "source-layer": props.sourceLayer })}
+      {...(sourceLayer && { "source-layer": sourceLayer })}
       type="fill"
       minzoom={minZoom}
       maxzoom={maxZoom}
-      // Paint uses activeSelectedId to determine fill color for selected property
+      // Paint uses feature-state to determine fill color for selected property
       paint={{
         "fill-color": [
           "case",
-          ["==", ["to-string", ["get", idProperty]], activeSelectedId ?? ""],
+          ["boolean", ["feature-state", "selected"], false],
           "#ff641c",
-          ["==", ["to-string", ["get", idProperty]], activeHoverId ?? ""],
+          ["boolean", ["feature-state", "hover"], false],
           "#ffdd1c",
           "#fff098",
         ],
         "fill-opacity": [
           "case",
-          ["==", ["to-string", ["get", idProperty]], activeSelectedId ?? ""],
+          ["boolean", ["feature-state", "selected"], false],
           0.8,
-          ["==", ["to-string", ["get", idProperty]], activeHoverId ?? ""],
+          ["boolean", ["feature-state", "hover"], false],
           0.8,
           0.3,
         ],
@@ -178,7 +214,12 @@ export function PropertyPolygons({
 
   if (props.sourceType === "vector") {
     return (
-      <Source id={sourceId} type="vector" url={props.sourceUrl}>
+      <Source
+        id={sourceId}
+        type="vector"
+        url={props.sourceUrl}
+        promoteId={idProperty}
+      >
         {fillLayer}
         {outlineLayer}
       </Source>
@@ -186,7 +227,12 @@ export function PropertyPolygons({
   }
   if (props.sourceType === "geojson") {
     return (
-      <Source id={sourceId} type="geojson" data={props.data}>
+      <Source
+        id={sourceId}
+        type="geojson"
+        data={props.data}
+        promoteId={idProperty}
+      >
         {fillLayer}
         {outlineLayer}
       </Source>

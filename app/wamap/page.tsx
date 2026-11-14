@@ -1,10 +1,8 @@
 "use client";
 
-import MapView from "@/components/mapview";
-import {
-  PropertyPolygons,
-  PropertyPolygonsProps,
-} from "@/components/map/property-polygons";
+import PropertyExplorer from "@/components/propertyexplorer";
+import { type MapViewProps } from "@/components/mapview";
+import { type PropertyPolygonsProps } from "@/components/map/property-polygons";
 
 const UW_INITIAL_VIEW = {
   latitude: 47.6553,
@@ -21,14 +19,17 @@ const UW_POLYGON_PROPS: PropertyPolygonsProps = {
 };
 
 export default function WaMapPage() {
+  const mapviewProps: MapViewProps = {
+    initialView: UW_INITIAL_VIEW,
+    mapboxAccessToken: process.env.NEXT_PUBLIC_MAPBOX_TOKEN,
+  };
+
   return (
-    <div className="flex h-full w-full">
-      <MapView
-        initialView={UW_INITIAL_VIEW}
-        mapboxAccessToken={process.env.NEXT_PUBLIC_MAPBOX_TOKEN}
-      >
-        <PropertyPolygons {...UW_POLYGON_PROPS} />
-      </MapView>
+    <div className="h-full w-full">
+      <PropertyExplorer
+        mapProps={mapviewProps}
+        polygonProps={UW_POLYGON_PROPS}
+      />
     </div>
   );
 }
