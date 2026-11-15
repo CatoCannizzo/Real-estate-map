@@ -1,5 +1,6 @@
-"use client";
-
+import fs from "fs";
+import path from "path";
+import type { FeatureCollection } from "geojson";
 import PropertyExplorer from "@/components/propertyexplorer";
 import { type MapViewProps } from "@/components/mapview";
 import { type PropertyPolygonsProps } from "@/components/map/property-polygons";
@@ -10,10 +11,18 @@ const UW_INITIAL_VIEW = {
   zoom: 15,
 };
 
+const seattleGeoJsonPath = path.join(
+  process.cwd(),
+  "public/sampleData/seattle-udistrict-sample.geojson",
+);
+const seattleGeoJsonData = JSON.parse(
+  fs.readFileSync(seattleGeoJsonPath, "utf-8"),
+) as FeatureCollection;
+
 const UW_POLYGON_PROPS: PropertyPolygonsProps = {
   sourceType: "geojson",
   sourceId: "uw-parcels",
-  data: "/sampleData/seattle-udistrict-sample.geojson",
+  data: seattleGeoJsonData,
   idProperty: "pin",
   minZoom: 10,
 };

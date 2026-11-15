@@ -13,6 +13,8 @@ interface BasePolygonProps {
   fillLayerId?: string;
   /** What to call the line layer if applicable */
   lineLayerId?: string;
+  /** Controlled selected parcel ID from parent orchestrator */
+  selectedId?: string | null;
   onSelect?: (id: string | null) => void;
   onHover?: (id: string | null) => void;
   visible?: boolean;
@@ -37,6 +39,7 @@ export type PropertyPolygonsProps = VectorPolygonProps | GeoJsonPolygonProps;
  * Renders interactive parcel boundary polygons (fill + outline layers) on a Mapbox map.
  *
  * @remarks
+ * - **Supports Vector and GeoJSON Sources:** Can render parcels from either a Mapbox vector tile source or a GeoJSON source.
  * - **Uncontrolled Highlight State:** Hover and selection styling are managed
  *    via Mapbox `feature-state`
  *   and internal refs rather than React state to avoid re-serializing layer paint properties.
@@ -63,6 +66,7 @@ export function PropertyPolygons({
   visible = true,
   minZoom = 11,
   maxZoom = 18,
+  selectedId,
   onSelect,
   onHover,
   ...props
@@ -77,6 +81,38 @@ export function PropertyPolygons({
       : Boolean(props.data);
   const sourceLayer =
     props.sourceType === "vector" ? props.sourceLayer : undefined;
+
+  // Sync controlled `selectedId` prop (e.g. from sidebar close or address search) with Mapbox feature-state
+  useEffect(() => {
+    if (!map || !visible || !isSourceValid || selectedId === undefined) return;
+    if (selectedIdRef.current === selectedId) return;
+
+    const applySelection = () => {
+      if (!map.getSource(sourceId)) return;
+      if (selectedIdRef.current !== null) {
+        map.removeFeatureState(
+          { source: sourceId, sourceLayer, id: selectedIdRef.current },
+          "selected",
+        );
+      }
+      selectedIdRef.current = selectedId;
+      if (selectedId !== null) {
+        map.setFeatureState(
+          { source: sourceId, sourceLayer, id: selectedId },
+          { selected: true },
+        );
+      }
+    };
+
+    if (map.isStyleLoaded() && map.getSource(sourceId)) {
+      applySelection();
+    } else {
+      map.once("sourcedata", applySelection);
+      return () => {
+        map.off("sourcedata", applySelection);
+      };
+    }
+  }, [map, sourceId, sourceLayer, visible, isSourceValid, selectedId]);
 
   useEffect(() => {
     if (!map || !visible || !isSourceValid || !fillLayerId) return;

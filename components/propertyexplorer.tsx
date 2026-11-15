@@ -9,6 +9,7 @@ import {
 import { PropertyMarkers } from "@/components/map/property-markers";
 import { PropertySidebar } from "@/components/map/property-sidebar";
 import { type Property } from "@/components/map/property-type";
+import { usePropertyDetails } from "@/components/map/use-property-details";
 
 export interface PropertyExplorerProps {
   mapProps: MapViewProps;
@@ -22,6 +23,7 @@ export default function PropertyExplorer({
   properties,
 }: PropertyExplorerProps) {
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const { property, loading } = usePropertyDetails(selectedId, polygonProps);
 
   return (
     <div className="flex h-full w-full overflow-hidden">
@@ -29,6 +31,7 @@ export default function PropertyExplorer({
         <MapView {...mapProps}>
           <PropertyPolygons
             {...polygonProps}
+            selectedId={selectedId}
             onSelect={(id) => {
               setSelectedId(id);
               polygonProps.onSelect?.(id);
@@ -40,6 +43,8 @@ export default function PropertyExplorer({
 
       <PropertySidebar
         selectedId={selectedId}
+        property={property}
+        loading={loading}
         onClose={() => setSelectedId(null)}
       />
     </div>

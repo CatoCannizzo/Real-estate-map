@@ -2,12 +2,13 @@
 import { useLazyQuery } from "@apollo/client/react";
 import { useMemo } from "react";
 
-import { GET_PROPERTIES } from "@/lib/graphql/parcels";
+import { GET_PARCEL_PROPERTIES } from "@/lib/graphql/parcels";
 import type { Property } from "@/components/map/property-type";
 
 export function useGqlProperties() {
-  const [getProperties, { data, loading, error }] =
-    useLazyQuery(GET_PROPERTIES);
+  const [getProperties, { data, loading, error }] = useLazyQuery(
+    GET_PARCEL_PROPERTIES,
+  );
 
   //Map graphql data to the property interface
   const properties = useMemo<Property[]>(() => {
@@ -20,10 +21,7 @@ export function useGqlProperties() {
           return null;
         }
 
-        const street = [
-          item.address_street_number,
-          item.address_street,
-        ]
+        const street = [item.address_street_number, item.address_street]
           .filter(Boolean)
           .join(" ");
         const stateZip = [item.address_state, item.address_zip]
