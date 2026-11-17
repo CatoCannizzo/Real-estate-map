@@ -12,6 +12,7 @@ import {
 export interface UsePropertyDetailsResult {
   property: Property | null;
   loading: boolean;
+  error?: Error;
 }
 
 /**
@@ -122,13 +123,14 @@ export function usePropertyDetails(
 ): UsePropertyDetailsResult {
   const isVectorSource: boolean =
     polygonProps.sourceType === "vector" && Boolean(selectedId);
-  const { data: reonomyData, loading: reonomyLoading } = useQuery(
-    GET_REONOMY_PROPERTY,
-    {
-      skip: !isVectorSource,
-      variables: { parcel_id: selectedId ?? "" },
-    },
-  );
+  const {
+    data: reonomyData,
+    loading: reonomyLoading,
+    error: reonomyError,
+  } = useQuery(GET_REONOMY_PROPERTY, {
+    skip: !isVectorSource,
+    variables: { parcel_id: selectedId ?? "" },
+  });
 
   const property = useMemo<Property | null>(() => {
     if (!selectedId) return null;
@@ -165,5 +167,6 @@ export function usePropertyDetails(
   return {
     property,
     loading: reonomyLoading ? reonomyLoading && isVectorSource : false,
+    error: isVectorSource ? reonomyError : undefined,
   };
 }

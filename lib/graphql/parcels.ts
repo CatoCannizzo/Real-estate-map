@@ -3,7 +3,6 @@ import { gql, OperationVariables, TypedDocumentNode } from "@apollo/client";
 interface ReonomyQuery {
   parcel_id: string;
 }
-
 interface ReonomyQueryResponse {
   reonomyProperties: { items: ReonomyPropertyItem[] };
 }
@@ -30,6 +29,19 @@ export interface ReonomyPropertyItem {
   lon?: number;
   year_built?: number;
   reonomyPropertySale?: { items: SaleRecord[] };
+}
+
+interface AddressSearchQuery {
+  prefix: string;
+}
+export interface AddressSearchItem {
+  parcel_id: string;
+  address_line1: string;
+  lat: number;
+  lon: number;
+}
+interface AddressSearchResponse {
+  reonomyProperties: { items: AddressSearchItem[] };
 }
 
 export interface ParcelPropertyItem {
@@ -100,6 +112,28 @@ export const GET_PARCEL_PROPERTIES: TypedDocumentNode<
         address_street
         address_street_number
         address_unit
+      }
+    }
+  }
+`;
+
+export const GET_PROPERTY_BY_ADDRESS: TypedDocumentNode<
+  AddressSearchResponse,
+  AddressSearchQuery
+> = gql`
+  query searchAddress($prefix: String!) {
+    reonomyProperties(
+      first: 8
+      filter: {
+        address_line1: { startsWith: $prefix }
+        city: { eq: "NEW YORK" }
+      }
+    ) {
+      items {
+        parcel_id
+        address_line1
+        lat
+        lon
       }
     }
   }

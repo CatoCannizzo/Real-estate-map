@@ -33,8 +33,10 @@ export default function MapPage() {
 
   useEffect(() => {
     if (error) {
-      toast.error("Failed to load properties", {
-        description: error.message || "An error occurred",
+      console.error("[GraphQL Properties Load Error]:", error);
+      toast.error("Unable to load properties", {
+        description:
+          "We couldn't retrieve the property data right now. Please try again shortly.",
       });
     }
   }, [error]);
