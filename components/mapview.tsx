@@ -1,6 +1,6 @@
 "use client";
 
-import Map, { Source, Layer } from "react-map-gl/mapbox";
+import Map, { Source, Layer, type MapRef } from "react-map-gl/mapbox";
 import "mapbox-gl/dist/mapbox-gl.css";
 import { Loader2 } from "lucide-react";
 
@@ -17,6 +17,7 @@ export interface MapViewProps {
   loadedCount?: number;
   loading?: boolean;
   onLoadData?: () => void;
+  mapRef?: React.Ref<MapRef>;
   children?: React.ReactNode;
 }
 
@@ -26,6 +27,7 @@ export default function MapView({
   loadedCount = 0,
   loading = false,
   onLoadData,
+  mapRef,
   children,
 }: MapViewProps) {
   return (
@@ -58,6 +60,7 @@ export default function MapView({
         initialViewState={initialView}
         mapStyle="mapbox://styles/mapbox/streets-v12"
         style={{ width: "100%", height: "100%" }}
+        ref={mapRef}
       >
         <Source
           id="mapbox-terrain"

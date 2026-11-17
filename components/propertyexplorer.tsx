@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { toast } from "sonner";
+import type { MapRef } from "react-map-gl/mapbox";
 import MapView, { type MapViewProps } from "@/components/mapview";
 import SearchBar from "@/components/search-bar";
 import {
@@ -28,6 +29,7 @@ export default function PropertyExplorer({
 }: PropertyExplorerProps) {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const mapRef = useRef<MapRef>(null);
 
   const {
     property,
@@ -66,6 +68,11 @@ export default function PropertyExplorer({
     setSearchQuery(item.address_line1);
     setSelectedId(item.parcel_id);
     polygonProps.onSelect?.(item.parcel_id);
+    mapRef.current?.flyTo({
+      center: [item.lon, item.lat],
+      zoom: 17,
+      duration: 2000,
+    });
   };
 
   return (
@@ -88,7 +95,7 @@ export default function PropertyExplorer({
           />
         </div>
 
-        <MapView {...mapProps}>
+        <MapView mapRef={mapRef} {...mapProps}>
           <PropertyPolygons
             {...polygonProps}
             selectedId={selectedId}
