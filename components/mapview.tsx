@@ -7,6 +7,7 @@ import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 
+/** Props for the MapView wrapper component */
 export interface MapViewProps {
   initialView: {
     latitude: number;
@@ -21,6 +22,10 @@ export interface MapViewProps {
   children?: React.ReactNode;
 }
 
+/**
+ * Base Mapbox wrapper that handles terrain contour lines, map styling,
+ * the optional bulk load button, and hosts child layers (polygons & markers).
+ */
 export default function MapView({
   initialView,
   mapboxAccessToken = process.env.NEXT_PUBLIC_MAPBOX_TOKEN,
@@ -32,7 +37,7 @@ export default function MapView({
 }: MapViewProps) {
   return (
     <div className="relative w-full h-full">
-      {/* Floating action bar on top of the map */}
+      {/* Floating action bar to trigger loading properties and show total count */}
       {onLoadData && (
         <div className="absolute top-4 left-4 z-10 flex items-center gap-2">
           <Button
@@ -62,6 +67,7 @@ export default function MapView({
         style={{ width: "100%", height: "100%" }}
         ref={mapRef}
       >
+        {/* Adds subtle contour elevation lines using Mapbox terrain vector tiles */}
         <Source
           id="mapbox-terrain"
           type="vector"
@@ -79,6 +85,7 @@ export default function MapView({
             }}
           />
         </Source>
+        {/* Child layers like parcel boundaries and property pins */}
         {children}
       </Map>
     </div>

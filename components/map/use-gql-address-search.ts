@@ -2,8 +2,8 @@
 import { useLazyQuery } from "@apollo/client/react";
 import { useEffect, useRef, useMemo } from "react";
 
-import { GET_PROPERTY_BY_ADDRESS } from "@/lib/graphql/parcels";
-import type { AddressSearchItem } from "@/lib/graphql/parcels";
+import { GET_PROPERTY_BY_ADDRESS } from "@/lib/graphql/queries";
+import type { AddressSearchItem } from "@/lib/graphql/queries";
 
 export function useGqlAddressSearch() {
   // Initializes the lazy GraphQl query and sets state for the search results, loading state, and error state

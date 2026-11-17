@@ -6,8 +6,10 @@ import { MapPin } from "lucide-react";
 import type { Property } from "./property-type";
 import { PropertyPopup } from "./property-popup";
 
+// Defines where the text label attaches relative to the pin icon
 export type PinLabelPosition = "bottom" | "side" | "right" | "left" | "top";
 
+/** Props for the individual PropertyPin button component */
 export interface PropertyPinProps {
   id: string;
   name?: string;
@@ -19,6 +21,7 @@ export interface PropertyPinProps {
   onClick: () => void;
 }
 
+// Tailwind positioning classes to align the label bubble around the pin
 const labelPositionStyles: Record<PinLabelPosition, string> = {
   bottom: "top-full left-1/2 -translate-x-1/2 mt-1.5",
   side: "left-full top-1/2 -translate-y-1/2 ml-1.5",
@@ -27,6 +30,7 @@ const labelPositionStyles: Record<PinLabelPosition, string> = {
   top: "bottom-full left-1/2 -translate-x-1/2 mb-1.5",
 };
 
+/** Clickable map pin icon with hover states, active selection ring, and optional label */
 export const PropertyPin = React.memo(function PropertyPin({
   id,
   name,
@@ -43,6 +47,7 @@ export const PropertyPin = React.memo(function PropertyPin({
     <button
       type="button"
       onClick={(e) => {
+        // Stops click from bubbling up to the map so we don't trigger map clicks
         e.stopPropagation();
         onClick();
       }}
@@ -58,6 +63,7 @@ export const PropertyPin = React.memo(function PropertyPin({
       <MapPin className="size-3.5 shrink-0" />
 
       {showLabel && (
+        /* Floating label showing property name or ID (hidden if selected to avoid clutter) */
         <span
           className={`absolute whitespace-nowrap max-w-[160px] truncate text-[11px] font-semibold px-2 py-0.5 rounded-md shadow-md border transition-all pointer-events-auto ${labelPositionStyles[labelPosition]} ${
             isSelected
@@ -72,6 +78,7 @@ export const PropertyPin = React.memo(function PropertyPin({
   );
 });
 
+/** Props for the PropertyMarkers collection component */
 export interface PropertyMarkersProps {
   properties: Property[];
   selectedId?: string | null;
@@ -87,7 +94,7 @@ interface PropertyMarkerItemProps {
   onSelect: (property: Property) => void;
 }
 
-/** Memoized individual marker item */
+// Memoized single pin wrapper so we don't re-render every marker when only one changes
 const PropertyMarkerItem = React.memo(function PropertyMarkerItem({
   property,
   isSelected,
@@ -115,6 +122,7 @@ const PropertyMarkerItem = React.memo(function PropertyMarkerItem({
   );
 });
 
+/** Renders a list of map pins with click selection, popups, and support for controlled or uncontrolled state */
 export function PropertyMarkers({
   properties,
   selectedId: externalSelectedId,
@@ -122,9 +130,11 @@ export function PropertyMarkers({
   showPopup = true,
   onSelectProperty,
 }: PropertyMarkersProps) {
+  // Tracks selection internally if parent didn't pass a selectedId
   const [internalSelectedProperty, setInternalSelectedProperty] =
     useState<Property | null>(null);
 
+  // Check if selection is controlled from a parent component or kept internally
   const isControlled = externalSelectedId !== undefined;
   const activeSelectedId = isControlled
     ? externalSelectedId
@@ -134,6 +144,7 @@ export function PropertyMarkers({
     ? (properties.find((p) => p.id === externalSelectedId) ?? null)
     : internalSelectedProperty;
 
+  // Handles marker click: updates local state if uncontrolled and calls parent callback
   const handleSelect = useCallback(
     (property: Property) => {
       if (!isControlled) {
@@ -144,6 +155,7 @@ export function PropertyMarkers({
     [isControlled, onSelectProperty],
   );
 
+  // Handles closing the popup: resets local state if uncontrolled and notifies parent
   const handleClosePopup = useCallback(() => {
     if (!isControlled) {
       setInternalSelectedProperty(null);
@@ -153,6 +165,7 @@ export function PropertyMarkers({
 
   return (
     <>
+      {/* Individual Mapbox pins */}
       {properties.map((prop) => (
         <PropertyMarkerItem
           key={prop.id}
@@ -162,6 +175,7 @@ export function PropertyMarkers({
           onSelect={handleSelect}
         />
       ))}
+      {/* Popup info card anchored to the selected property */}
       {showPopup && (
         <PropertyPopup
           property={activeSelectedProperty}

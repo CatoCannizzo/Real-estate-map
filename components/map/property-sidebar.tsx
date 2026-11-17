@@ -23,6 +23,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import type { Property } from "@/components/map/property-type";
 
+/** Props for the slide-out property detail sidebar */
 export interface PropertySidebarProps {
   selectedId: string | null;
   property?: Property | null;
@@ -52,6 +53,7 @@ const currencyFormatter = new Intl.NumberFormat("en-US", {
 
 const numberFormatter = new Intl.NumberFormat("en-US");
 
+// Formats a number to USD currency (rounded, no cents)
 export function formatCurrency(value?: number | null): string {
   if (value === null || value === undefined || Number.isNaN(value)) {
     return "—";
@@ -59,6 +61,7 @@ export function formatCurrency(value?: number | null): string {
   return currencyFormatter.format(value);
 }
 
+// Formats a number with commas and an optional suffix like "sq ft"
 export function formatNumber(value?: number | null, suffix = ""): string {
   if (value === null || value === undefined || Number.isNaN(value)) {
     return "—";
@@ -66,6 +69,7 @@ export function formatNumber(value?: number | null, suffix = ""): string {
   return `${numberFormatter.format(value)}${suffix}`;
 }
 
+// Formats a dollar amount per square foot (e.g. $450/sf)
 export function formatPricePerSqFt(value?: number | null): string {
   if (value === null || value === undefined || Number.isNaN(value)) {
     return "—";
@@ -73,6 +77,7 @@ export function formatPricePerSqFt(value?: number | null): string {
   return `${currencyFormatter.format(value)}/sf`;
 }
 
+// Checks if a field has a valid, non-empty value to display
 function isValuePresent(value?: string | number | null): boolean {
   if (value === null || value === undefined || value === "") return false;
   if (typeof value === "number" && Number.isNaN(value)) return false;
@@ -134,12 +139,14 @@ export function PropertyDetailCard({
   );
 }
 
+/** Displays full parcel details, building specs, valuation, and past sales in a sidebar */
 export function PropertySidebar({
   selectedId,
   property,
   loading = false,
   onClose,
 }: PropertySidebarProps) {
+  // Sorts sales transactions chronologically from newest to oldest
   const sortedSales = property?.salesHistory
     ? [...property.salesHistory].sort((a, b) => {
         const dateA = a.recordingDate ? new Date(a.recordingDate).getTime() : 0;
@@ -148,6 +155,7 @@ export function PropertySidebar({
       })
     : [];
 
+  // Combines neighborhood, city, state, and zip into a clean subtitle
   const locationLine = [
     property?.neighborhood,
     property?.city,
@@ -156,6 +164,7 @@ export function PropertySidebar({
     .filter(Boolean)
     .join(", ");
 
+  // Configuration for info cards (cards with only blank values are hidden automatically)
   const detailCards: PropertyDetailCardProps[] = property
     ? [
         {
@@ -252,6 +261,7 @@ export function PropertySidebar({
 
       <div className="flex-1 p-4 space-y-4">
         {!selectedId ? (
+          /* Empty state shown when no parcel has been selected */
           <div className="h-full flex flex-col items-center justify-center text-center px-4 py-12 text-muted-foreground space-y-2">
             <div className="size-10 rounded-full bg-muted flex items-center justify-center">
               <MapPin className="size-5 text-muted-foreground" />
@@ -264,6 +274,7 @@ export function PropertySidebar({
             </p>
           </div>
         ) : loading ? (
+          /* Loading skeletons while parcel data is being fetched */
           <div className="space-y-4">
             <div className="space-y-2">
               <Skeleton className="h-5 w-3/4" />
@@ -277,6 +288,7 @@ export function PropertySidebar({
             <Skeleton className="h-28 w-full rounded-xl" />
           </div>
         ) : !property ? (
+          /* Fallback card if the parcel ID exists but has no records */
           <div className="space-y-3">
             <div className="space-y-1">
               <p className="text-xs text-muted-foreground">Selected Parcel ID</p>

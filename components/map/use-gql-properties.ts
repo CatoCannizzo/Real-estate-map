@@ -2,7 +2,7 @@
 import { useLazyQuery } from "@apollo/client/react";
 import { useMemo } from "react";
 
-import { GET_PARCEL_PROPERTIES } from "@/lib/graphql/parcels";
+import { GET_PARCEL_PROPERTIES } from "@/lib/graphql/queries";
 import type { Property } from "@/components/map/property-type";
 
 export function useGqlProperties() {

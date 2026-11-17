@@ -6,12 +6,14 @@ import { type MapViewProps } from "@/components/mapview";
 import { type PropertyPolygonsProps } from "@/components/map/property-polygons";
 import { useGqlProperties } from "@/components/map/use-gql-properties";
 
+// Center map on Midtown Manhattan around the Empire State Building
 const MANHATTAN_INITIAL_VIEW = {
   latitude: 40.7484,
   longitude: -73.9857,
   zoom: 15,
 };
 
+// Vector tile configuration for NYC parcel boundaries (Attom data hosted on Mapbox)
 const MANHATTAN_POLYGON_PROPS: PropertyPolygonsProps = {
   sourceType: "vector",
   sourceId: "property-boundaries",
@@ -23,7 +25,12 @@ const MANHATTAN_POLYGON_PROPS: PropertyPolygonsProps = {
   maxZoom: 20,
 };
 
+/**
+ * Manhattan / NYC Map Route:
+ * Loads vector parcel polygons and queries Reonomy property data via GraphQL.
+ */
 export default function MapPage() {
+  // Hook to fetch batch property markers from the GraphQL backend
   const {
     properties: gqlProperties,
     getProperties,
@@ -31,6 +38,7 @@ export default function MapPage() {
     error,
   } = useGqlProperties();
 
+  // Handles error when loading property markers from GraphQL and displays a toast notification
   useEffect(() => {
     if (error) {
       console.error("[GraphQL Properties Load Error]:", error);
@@ -41,6 +49,7 @@ export default function MapPage() {
     }
   }, [error]);
 
+  // Map settings including center coords, token, and the load properties button handler
   const mapviewProps: MapViewProps = {
     initialView: MANHATTAN_INITIAL_VIEW,
     mapboxAccessToken: process.env.NEXT_PUBLIC_MAPBOX_TOKEN,

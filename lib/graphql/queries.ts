@@ -1,11 +1,14 @@
 import { gql, OperationVariables, TypedDocumentNode } from "@apollo/client";
 
+// Types for looking up full Reonomy property records by parcel ID
 interface ReonomyQuery {
   parcel_id: string;
 }
 interface ReonomyQueryResponse {
   reonomyProperties: { items: ReonomyPropertyItem[] };
 }
+
+// Represents an individual past sale recorded on a property
 export interface SaleRecord {
   sales_id: string;
   recording_date?: string;
@@ -14,6 +17,7 @@ export interface SaleRecord {
   document_type?: string;
 }
 
+// Full property details returned for a parcel from the Reonomy dataset
 export interface ReonomyPropertyItem {
   parcel_id?: string;
   address_line1?: string;
@@ -31,9 +35,12 @@ export interface ReonomyPropertyItem {
   reonomyPropertySale?: { items: SaleRecord[] };
 }
 
+// Types for the address search autocomplete bar
 interface AddressSearchQuery {
   prefix: string;
 }
+
+// Lightweight address result used to show suggestions in the search bar dropdown
 export interface AddressSearchItem {
   parcel_id: string;
   address_line1: string;
@@ -44,6 +51,7 @@ interface AddressSearchResponse {
   reonomyProperties: { items: AddressSearchItem[] };
 }
 
+// Basic parcel details and coordinates used when batch loading map markers
 export interface ParcelPropertyItem {
   id: string;
   geometry_geojson?: string | null;
@@ -62,6 +70,8 @@ export interface ParcelPropertiesData {
     items: ParcelPropertyItem[];
   };
 }
+
+// Pulls detailed building specs, lot size, and up to 20 past sales for a single parcel ID
 export const GET_REONOMY_PROPERTY: TypedDocumentNode<
   ReonomyQueryResponse,
   ReonomyQuery
@@ -96,6 +106,7 @@ export const GET_REONOMY_PROPERTY: TypedDocumentNode<
   }
 `;
 
+// Pulls basic parcel coordinates and addresses (used for bulk map marker loading)
 export const GET_PARCEL_PROPERTIES: TypedDocumentNode<
   ParcelPropertiesData,
   OperationVariables
@@ -117,6 +128,7 @@ export const GET_PARCEL_PROPERTIES: TypedDocumentNode<
   }
 `;
 
+// Searches addresses in NYC starting with a prefix string (capped at 8 results for autocomplete)
 export const GET_PROPERTY_BY_ADDRESS: TypedDocumentNode<
   AddressSearchResponse,
   AddressSearchQuery

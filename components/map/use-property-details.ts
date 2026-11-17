@@ -7,7 +7,7 @@ import type { PropertyPolygonsProps } from "@/components/map/property-polygons";
 import {
   GET_REONOMY_PROPERTY,
   type ReonomyPropertyItem,
-} from "@/lib/graphql/parcels";
+} from "@/lib/graphql/queries";
 
 export interface UsePropertyDetailsResult {
   property: Property | null;

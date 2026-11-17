@@ -11,7 +11,7 @@ import {
   CommandItem,
   CommandList,
 } from "@/components/ui/command";
-import type { AddressSearchItem } from "@/lib/graphql/parcels";
+import type { AddressSearchItem } from "@/lib/graphql/queries";
 
 export interface SearchBarProps {
   /** Current value for controlled usage */
