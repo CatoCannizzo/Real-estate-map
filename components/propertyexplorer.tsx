@@ -11,6 +11,7 @@ import {
 } from "@/components/map/property-polygons";
 import { PropertyMarkers } from "@/components/map/property-markers";
 import { PropertySidebar } from "@/components/map/property-sidebar";
+import { YearBuiltLegend } from "@/components/map/year-built-legend";
 import { type Property } from "@/components/map/property-type";
 import { usePropertyDetails } from "@/components/map/use-property-details";
 import { useGqlAddressSearch } from "@/components/map/use-gql-address-search";
@@ -39,6 +40,8 @@ export default function PropertyExplorer({
 }: PropertyExplorerProps) {
   // Tracks state for the currently selected parcel ID
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  // Controls whether parcel polygons are colored by year built (choropleth)
+  const [colorByYearBuilt, setColorByYearBuilt] = useState(false);
   // State for the search query input
   const [searchQuery, setSearchQuery] = useState("");
   const mapRef = useRef<MapRef>(null);
@@ -123,6 +126,7 @@ export default function PropertyExplorer({
         <MapView mapRef={mapRef} {...mapProps}>
           <PropertyPolygons
             {...polygonProps}
+            colorByYearBuilt={colorByYearBuilt}
             selectedId={selectedId}
             onSelect={(id) => {
               setSelectedId(id);
@@ -131,6 +135,14 @@ export default function PropertyExplorer({
           />
           {properties && <PropertyMarkers properties={properties} />}
         </MapView>
+
+        {/* Floating Year Built choropleth toggle and color scale legend */}
+        <div className="absolute z-10 bottom-8 left-4">
+          <YearBuiltLegend
+            active={colorByYearBuilt}
+            onToggle={setColorByYearBuilt}
+          />
+        </div>
       </div>
       {/* Property Sidebar showcases a list of self hidding info divs */}
       <PropertySidebar

@@ -4,8 +4,19 @@ import { gql, OperationVariables, TypedDocumentNode } from "@apollo/client";
 interface ReonomyQuery {
   parcel_id: string;
 }
+export interface MassReonomyQuery {
+  ids: string[];
+}
 interface ReonomyQueryResponse {
   reonomyProperties: { items: ReonomyPropertyItem[] };
+}
+// Represents the return for cloropleth map
+export interface YearBuiltReturn {
+  reonomyProperties: { items: YearBuiltItem[] };
+}
+export interface YearBuiltItem {
+  parcel_id?: string;
+  year_built?: number;
 }
 
 // Represents an individual past sale recorded on a property
@@ -70,6 +81,20 @@ export interface ParcelPropertiesData {
     items: ParcelPropertyItem[];
   };
 }
+// Grabs year_built by ID in chunks of 50
+export const GET_YEAR_BUILT_BY_IDS: TypedDocumentNode<
+  YearBuiltReturn,
+  MassReonomyQuery
+> = gql`
+  query ParcelsByIds($ids: [String!]) {
+    reonomyProperties(first: 50, filter: { parcel_id: { in: $ids } }) {
+      items {
+        parcel_id
+        year_built
+      }
+    }
+  }
+`;
 
 // Pulls detailed building specs, lot size, and up to 20 past sales for a single parcel ID
 export const GET_REONOMY_PROPERTY: TypedDocumentNode<
