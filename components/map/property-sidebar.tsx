@@ -14,12 +14,7 @@ import {
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { Property } from "@/components/map/property-type";
 
@@ -75,6 +70,14 @@ export function formatPricePerSqFt(value?: number | null): string {
     return "—";
   }
   return `${currencyFormatter.format(value)}/sf`;
+}
+
+// Formats a boolean flag to "Yes" / "No", falling back to "—" when missing
+export function formatBoolean(value?: boolean | null): string {
+  if (value === null || value === undefined) {
+    return "—";
+  }
+  return value ? "Yes" : "No";
 }
 
 // Checks if a field has a valid, non-empty value to display
@@ -291,7 +294,9 @@ export function PropertySidebar({
           /* Fallback card if the parcel ID exists but has no records */
           <div className="space-y-3">
             <div className="space-y-1">
-              <p className="text-xs text-muted-foreground">Selected Parcel ID</p>
+              <p className="text-xs text-muted-foreground">
+                Selected Parcel ID
+              </p>
               <Badge variant="secondary" className="text-xs font-mono">
                 {selectedId}
               </Badge>
