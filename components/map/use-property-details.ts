@@ -24,8 +24,8 @@ function mapReonomyPropertyToProperty(
   const id = rpi.parcel_id ?? "";
   const address = rpi.address_line1;
   const city = rpi.city;
-  const lat = rpi.lat;
-  const long = rpi.lon;
+  const lat = typeof rpi.lat === "number" ? rpi.lat : Number(rpi.lat);
+  const long = typeof rpi.lon === "number" ? rpi.lon : Number(rpi.lon);
   const yearBuilt = rpi.year_built;
   const reonomyPropertySales = (rpi.reonomyPropertySale?.items ?? []).map(
     (sale) => ({

@@ -38,21 +38,23 @@ export function useGqlAddressSearch() {
   const addresses = useMemo<AddressSearchItem[]>(() => {
     return (data?.reonomyProperties?.items ?? [])
       .map((item): AddressSearchItem | null => {
+        const lat = typeof item.lat === "number" ? item.lat : Number(item.lat);
+        const lon = typeof item.lon === "number" ? item.lon : Number(item.lon);
         if (
-          !item.lat ||
-          !item.lon ||
           !item.parcel_id ||
           !item.address_line1 ||
-          isNaN(item.lat) ||
-          isNaN(item.lon)
+          !lat ||
+          !lon ||
+          isNaN(lat) ||
+          isNaN(lon)
         ) {
           return null;
         }
         return {
           parcel_id: item.parcel_id,
           address_line1: item.address_line1,
-          lat: item.lat,
-          lon: item.lon,
+          lat,
+          lon,
         };
       })
       .filter((items): items is AddressSearchItem => !!items);

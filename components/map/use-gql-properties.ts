@@ -14,8 +14,14 @@ export function useGqlProperties() {
   const properties = useMemo<Property[]>(() => {
     return (data?.parcels?.items ?? [])
       .map((item): Property | null => {
-        const lat = item.latitude;
-        const long = item.longitude;
+        const lat =
+          typeof item.latitude === "number"
+            ? item.latitude
+            : Number(item.latitude);
+        const long =
+          typeof item.longitude === "number"
+            ? item.longitude
+            : Number(item.longitude);
         //Check if coords loaded correctly
         if (!lat || !long || isNaN(lat) || isNaN(long)) {
           return null;
@@ -32,7 +38,7 @@ export function useGqlProperties() {
           .join(", ");
 
         return {
-          id: item.id,
+          id: String(item.id),
           latitude: lat,
           longitude: long,
           address: address || undefined,
