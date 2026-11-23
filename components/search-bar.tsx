@@ -118,8 +118,7 @@ export function SearchBar({
   };
 
   const hasQuery = Boolean(currentValue && currentValue.trim().length > 0);
-  const showDropdown =
-    open && hasQuery && (loading || items.length > 0 || Boolean(error));
+  const showDropdown = open && hasQuery;
 
   return (
     <div ref={containerRef} className={cn("relative w-full", className)}>
@@ -134,7 +133,7 @@ export function SearchBar({
               onValueChange={handleValueChange}
               onKeyDown={handleKeyDown}
               onFocus={() => {
-                if (hasQuery && (items.length > 0 || Boolean(error))) {
+                if (hasQuery) {
                   setOpen(true);
                 }
               }}
@@ -178,7 +177,13 @@ export function SearchBar({
               </div>
             ) : (
               <>
-                <CommandEmpty>{emptyMessage}</CommandEmpty>
+                <CommandEmpty
+                  tabIndex={-1}
+                  aria-disabled="true"
+                  className="pointer-events-none select-none py-4 text-center text-xs text-muted-foreground"
+                >
+                  {emptyMessage}
+                </CommandEmpty>
                 {items.length > 0 && (
                   <CommandGroup heading="Addresses">
                     {items.map((item) => (
