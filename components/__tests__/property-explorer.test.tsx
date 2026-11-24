@@ -807,4 +807,278 @@ describe("PropertyExplorer — Persistent Parcel Selection & Mapbox Coordination
     expect(screen.getByText("Corner Plaza C")).toBeInTheDocument();
     expect(activeController.flyTo).not.toHaveBeenCalled();
   });
+
+  it("triggers flyTo when Mapbox onLoad finishes before delayed GET_REONOMY_PROPERTY resolves", async () => {
+    window.history.replaceState(null, "", "/map?id=1000010001");
+    activeController = createMockMapController({
+      styleLoaded: false,
+      autoLoad: false,
+      registeredSources: ["property-boundaries"],
+      registeredLayers: ["property-boundaries-fill"],
+    });
+
+    const mocks: MockedResponse[] = [
+      {
+        request: {
+          query: GET_REONOMY_PROPERTY,
+          variables: { parcel_id: "1000010001" },
+        },
+        delay: 120,
+        result: {
+          data: {
+            reonomyProperties: {
+              items: [
+                {
+                  parcel_id: "1000010001",
+                  address_line1: "350 5th Ave",
+                  city: "New York",
+                  zip5: "10118",
+                  neighborhood_name: "Midtown",
+                  asset_type: "Commercial Office",
+                  building_area: 2248355,
+                  lot_size_sqft: 91351,
+                  total_units: 102,
+                  floors: 102,
+                  lat: 40.7484,
+                  lon: -73.9857,
+                  year_built: 1931,
+                  reonomyPropertySale: { items: [] },
+                },
+              ],
+            },
+          },
+        },
+      },
+    ];
+
+    renderExplorer(VECTOR_POLYGON_PROPS, mocks);
+
+    // Map finishes loading while GraphQL request is still in flight
+    act(() => {
+      activeController.setStyleLoaded(true);
+      activeController.triggerLoad();
+    });
+    expect(activeController.flyTo).not.toHaveBeenCalled();
+
+    // Once Apollo finishes resolving, pendingFlyToIdRef executes flyTo
+    await waitFor(() => {
+      expect(screen.getByText("350 5th Ave")).toBeInTheDocument();
+      expect(activeController.flyTo).toHaveBeenCalledTimes(1);
+    });
+    expect(activeController.flyTo).toHaveBeenCalledWith({
+      center: [-73.9857, 40.7484],
+      zoom: 17,
+      duration: 2000,
+    });
+  });
+
+  it("cancels initial-load flyTo if the user clicks another polygon while initial ?id= GraphQL is still in flight", async () => {
+    window.history.replaceState(null, "", "/map?id=1000010001");
+
+    const mocks: MockedResponse[] = [
+      {
+        request: {
+          query: GET_REONOMY_PROPERTY,
+          variables: { parcel_id: "1000010001" },
+        },
+        delay: 180,
+        result: {
+          data: {
+            reonomyProperties: {
+              items: [
+                {
+                  parcel_id: "1000010001",
+                  address_line1: "350 5th Ave",
+                  city: "New York",
+                  zip5: "10118",
+                  neighborhood_name: "Midtown",
+                  asset_type: "Office",
+                  building_area: 2248355,
+                  lot_size_sqft: 91351,
+                  total_units: 102,
+                  floors: 102,
+                  lat: 40.7484,
+                  lon: -73.9857,
+                  year_built: 1931,
+                  reonomyPropertySale: { items: [] },
+                },
+              ],
+            },
+          },
+        },
+      },
+      {
+        request: {
+          query: GET_REONOMY_PROPERTY,
+          variables: { parcel_id: "2000020002" },
+        },
+        delay: 40,
+        result: {
+          data: {
+            reonomyProperties: {
+              items: [
+                {
+                  parcel_id: "2000020002",
+                  address_line1: "400 Madison Ave",
+                  city: "New York",
+                  zip5: "10017",
+                  neighborhood_name: "Midtown",
+                  asset_type: "Office",
+                  building_area: 200000,
+                  lot_size_sqft: 15000,
+                  total_units: 20,
+                  floors: 22,
+                  lat: 40.756,
+                  lon: -73.977,
+                  year_built: 1929,
+                  reonomyPropertySale: { items: [] },
+                },
+              ],
+            },
+          },
+        },
+      },
+    ];
+
+    renderExplorer(VECTOR_POLYGON_PROPS, mocks);
+
+    // Click another parcel directly before the initial ?id= query resolves
+    act(() => {
+      activeController.emitLayerClick("property-boundaries-fill", {
+        ID: "2000020002",
+      });
+    });
+
+    expect(window.location.search).toBe("?id=2000020002");
+
+    await waitFor(() => {
+      expect(screen.getByText("400 Madison Ave")).toBeInTheDocument();
+    });
+
+    // Wait past the initial query delay (180ms) to verify no stale flyTo occurs
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 220));
+    });
+
+    expect(screen.getByText("400 Madison Ave")).toBeInTheDocument();
+    expect(activeController.flyTo).not.toHaveBeenCalled();
+  });
+
+  it("does not re-trigger onSelect or flyTo 300ms after SearchBar selection and supports Back navigation cleanly", async () => {
+    const user = userEvent.setup();
+    const onSelectSpy = vi.fn();
+    window.history.replaceState(null, "", "/map");
+
+    const mocks: MockedResponse[] = [
+      {
+        request: {
+          query: GET_PROPERTY_BY_ADDRESS,
+          variables: { prefix: "500" },
+        },
+        result: {
+          data: {
+            reonomyProperties: {
+              items: [
+                {
+                  parcel_id: "100123",
+                  address_line1: "500 5TH AVE",
+                  lat: 40.753,
+                  lon: -73.981,
+                },
+              ],
+            },
+          },
+        },
+      },
+      {
+        request: {
+          query: GET_REONOMY_PROPERTY,
+          variables: { parcel_id: "100123" },
+        },
+        result: {
+          data: {
+            reonomyProperties: {
+              items: [
+                {
+                  parcel_id: "100123",
+                  address_line1: "500 5TH AVE",
+                  city: "New York",
+                  zip5: "10110",
+                  neighborhood_name: "Midtown",
+                  asset_type: "Office",
+                  building_area: 650000,
+                  lot_size_sqft: 20000,
+                  total_units: 40,
+                  floors: 60,
+                  lat: 40.753,
+                  lon: -73.981,
+                  year_built: 1931,
+                  reonomyPropertySale: { items: [] },
+                },
+              ],
+            },
+          },
+        },
+      },
+    ];
+
+    renderExplorer({ ...VECTOR_POLYGON_PROPS, onSelect: onSelectSpy }, mocks);
+
+    const searchInput = screen.getByRole("combobox");
+    await user.type(searchInput, "500");
+
+    const option = await screen.findByText("500 5TH AVE");
+    await user.click(option);
+
+    await waitFor(() => {
+      expect(activeController.flyTo).toHaveBeenCalledTimes(1);
+    });
+    expect(onSelectSpy).toHaveBeenCalledTimes(1);
+    expect(onSelectSpy).toHaveBeenLastCalledWith("100123");
+
+    // Waiting past the 300ms popstate window must not duplicate onSelect or flyTo
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 350));
+    });
+    expect(onSelectSpy).toHaveBeenCalledTimes(1);
+    expect(activeController.flyTo).toHaveBeenCalledTimes(1);
+
+    // Pressing Back navigates cleanly back to "/map" (no ?id=)
+    act(() => {
+      window.history.replaceState(null, "", "/map");
+      window.dispatchEvent(new PopStateEvent("popstate"));
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText("No Property Selected")).toBeInTheDocument();
+    });
+    expect(onSelectSpy).toHaveBeenCalledTimes(2);
+    expect(onSelectSpy).toHaveBeenLastCalledWith(null);
+    expect(activeController.flyTo).toHaveBeenCalledTimes(1);
+  });
+
+  it("clears pending popstate debounce timer on unmount without invoking onSelect or flyTo", () => {
+    vi.useFakeTimers();
+    const onSelectSpy = vi.fn();
+
+    const { unmount } = renderExplorer({
+      ...GEOJSON_POLYGON_PROPS,
+      onSelect: onSelectSpy,
+    });
+
+    act(() => {
+      window.history.replaceState(null, "", "/wamap?id=A");
+      window.dispatchEvent(new PopStateEvent("popstate"));
+      vi.advanceTimersByTime(100);
+    });
+
+    unmount();
+
+    act(() => {
+      vi.advanceTimersByTime(300);
+    });
+
+    expect(onSelectSpy).not.toHaveBeenCalled();
+    expect(activeController.flyTo).not.toHaveBeenCalled();
+  });
 });

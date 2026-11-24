@@ -349,6 +349,9 @@ export function PropertyPolygons({
             fetchPolicy: "cache-first",
           });
 
+          // Abort before mutating cache or feature-state if viewport panned, toggled off, or unmounted
+          if (currentRequest !== idYearCounter.current) return;
+
           const items = res.data?.reonomyProperties?.items ?? [];
           const returnedIds = new Set<string>();
 
@@ -373,9 +376,6 @@ export function PropertyPolygons({
               yearBuiltCache.current.set(id, null);
             }
           }
-
-          // Stale check after applying cache/state for this completed chunk
-          if (currentRequest !== idYearCounter.current) return;
         } catch (err) {
           console.error("[YearBuilt Fetch Error]:", err);
         }
@@ -389,6 +389,7 @@ export function PropertyPolygons({
     }
     map.on("moveend", handleMoveEnd);
     return () => {
+      idYearCounter.current += 1;
       map.off("idle", handleMoveEnd);
       map.off("moveend", handleMoveEnd);
     };

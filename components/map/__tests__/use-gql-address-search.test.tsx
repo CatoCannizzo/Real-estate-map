@@ -170,5 +170,106 @@ describe("useGqlAddressSearch", () => {
         },
       ]);
     });
+
+    it("ignores stale out-of-order GraphQL responses when a newer debounced query resolves first", async () => {
+      vi.useFakeTimers();
+      vi.mocked(ApolloReact.useLazyQuery).mockImplementation(
+        // Use actual Apollo useLazyQuery implementation so MockedProvider handles in-flight timing
+        (await vi.importActual<typeof ApolloReact>("@apollo/client/react"))
+          .useLazyQuery,
+      );
+
+      const mocks = [
+        {
+          request: {
+            query: GET_PROPERTY_BY_ADDRESS,
+            variables: { prefix: "500" },
+          },
+          delay: 400,
+          result: {
+            data: {
+              reonomyProperties: {
+                items: [
+                  {
+                    parcel_id: "STALE_500",
+                    address_line1: "500 STALE ST",
+                    lat: 40.7,
+                    lon: -74.0,
+                  },
+                ],
+              },
+            },
+          },
+        },
+        {
+          request: {
+            query: GET_PROPERTY_BY_ADDRESS,
+            variables: { prefix: "500 5TH" },
+          },
+          delay: 50,
+          result: {
+            data: {
+              reonomyProperties: {
+                items: [
+                  {
+                    parcel_id: "FRESH_500_5TH",
+                    address_line1: "500 5TH AVE",
+                    lat: 40.753,
+                    lon: -73.981,
+                  },
+                ],
+              },
+            },
+          },
+        },
+      ];
+
+      const wrapper = ({ children }: { children: ReactNode }) => (
+        <MockedProvider mocks={mocks}>{children}</MockedProvider>
+      );
+
+      const { result } = renderHook(() => useGqlAddressSearch(), { wrapper });
+
+      // Query 1 ("500") fires after 300ms debounce with a 400ms network delay
+      act(() => {
+        result.current.debouncedSearch("500");
+      });
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(310);
+      });
+
+      // Query 2 ("500 5TH") fires after 300ms debounce while Query 1 still has 90ms left,
+      // and Query 2 resolves quickly in 50ms before Query 1 completes
+      act(() => {
+        result.current.debouncedSearch("500 5TH");
+      });
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(360);
+      });
+
+      expect(result.current.addresses).toEqual([
+        {
+          parcel_id: "FRESH_500_5TH",
+          address_line1: "500 5TH AVE",
+          lat: 40.753,
+          lon: -73.981,
+        },
+      ]);
+
+      // Advance past Query 1's remaining delay so the stale response settles
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(200);
+      });
+
+      // Fresh Query 2 results must not be overwritten by the stale Query 1 response
+      expect(result.current.addresses).toEqual([
+        {
+          parcel_id: "FRESH_500_5TH",
+          address_line1: "500 5TH AVE",
+          lat: 40.753,
+          lon: -73.981,
+        },
+      ]);
+    });
   });
 });

@@ -234,6 +234,7 @@ export default function PropertyExplorer({
   const handleSelectAddress = (item: AddressSearchItem) => {
     clearPendingPopstate();
     setSearchQuery(item.address_line1);
+    prevUrlIdRef.current = item.parcel_id; // Keeps ref in sync with pushState
     syncParcelIdToUrl(item.parcel_id);
     polygonProps.onSelect?.(item.parcel_id);
 
