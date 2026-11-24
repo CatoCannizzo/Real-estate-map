@@ -109,8 +109,8 @@ export function PropertyPolygons({
     if (selectedIdRef.current === selectedId) return;
 
     // Helper to clear previous selection highlight and set the new one
-    const applySelection = () => {
-      if (!map.getSource(sourceId)) return;
+    const applySelection = (): boolean => {
+      if (!map.getSource(sourceId)) return false;
 
       // Remove selected state from previous parcel if one was selected
       if (selectedIdRef.current !== null) {
@@ -129,17 +129,57 @@ export function PropertyPolygons({
           { selected: true },
         );
       }
+
+      return true;
     };
 
-    // If source is already loaded apply immediately; otherwise wait for the sourcedata event so it doesn't fail silently
-    if (map.isStyleLoaded() && map.getSource(sourceId)) {
-      applySelection();
-    } else {
-      map.once("sourcedata", applySelection);
-      return () => {
-        map.off("sourcedata", applySelection);
-      };
+    const handleSourceData = () => {
+      if (applySelection()) {
+        map.off("sourcedata", handleSourceData);
+        map.off("idle", handleSourceData);
+      }
+    };
+
+    // Re-assert feature-state for vector tiles that stream in after camera flyTo
+    const handleVectorTileData = (event: {
+      sourceId?: string;
+      isSourceLoaded?: boolean;
+    }) => {
+      if (
+        sourceLayer &&
+        selectedId !== null &&
+        selectedIdRef.current === selectedId &&
+        event?.sourceId === sourceId &&
+        event?.isSourceLoaded &&
+        map.getSource(sourceId)
+      ) {
+        map.setFeatureState(
+          { source: sourceId, sourceLayer, id: selectedId },
+          { selected: true },
+        );
+      }
+    };
+
+    // If source is already loaded apply immediately; otherwise keep listening until sourceId registers
+    const appliedImmediately =
+      map.isStyleLoaded() && Boolean(map.getSource(sourceId))
+        ? applySelection()
+        : false;
+
+    if (!appliedImmediately) {
+      map.on("sourcedata", handleSourceData);
+      map.on("idle", handleSourceData);
     }
+
+    if (sourceLayer && selectedId !== null) {
+      map.on("sourcedata", handleVectorTileData);
+    }
+
+    return () => {
+      map.off("sourcedata", handleSourceData);
+      map.off("idle", handleSourceData);
+      map.off("sourcedata", handleVectorTileData);
+    };
   }, [map, sourceId, sourceLayer, visible, isSourceValid, selectedId]);
 
   // Sets up map mouse listeners for clicking, hovering, and pointer cursor styling on parcels
