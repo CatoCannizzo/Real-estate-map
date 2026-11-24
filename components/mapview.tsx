@@ -1,6 +1,11 @@
 "use client";
 
-import Map, { Source, Layer, type MapRef } from "react-map-gl/mapbox";
+import Map, {
+  Source,
+  Layer,
+  type MapRef,
+  type MapEvent,
+} from "react-map-gl/mapbox";
 import "mapbox-gl/dist/mapbox-gl.css";
 import { Loader2 } from "lucide-react";
 
@@ -20,6 +25,7 @@ export interface MapViewProps {
   onLoadData?: () => void;
   mapRef?: React.Ref<MapRef>;
   children?: React.ReactNode;
+  onLoad?: (e: MapEvent) => void;
 }
 
 /**
@@ -32,6 +38,7 @@ export default function MapView({
   loadedCount = 0,
   loading = false,
   onLoadData,
+  onLoad,
   mapRef,
   children,
 }: MapViewProps) {
@@ -66,6 +73,7 @@ export default function MapView({
         mapStyle="mapbox://styles/mapbox/streets-v12"
         style={{ width: "100%", height: "100%" }}
         ref={mapRef}
+        onLoad={onLoad}
       >
         {/* Adds subtle contour elevation lines using Mapbox terrain vector tiles */}
         <Source

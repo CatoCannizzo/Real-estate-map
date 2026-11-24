@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useSyncExternalStore } from "react";
 import { toast } from "sonner";
 import type { MapRef } from "react-map-gl/mapbox";
 import MapView, { type MapViewProps } from "@/components/mapview";
@@ -18,6 +18,14 @@ import { useGqlAddressSearch } from "@/components/map/use-gql-address-search";
 import type { AddressSearchItem } from "@/lib/graphql/queries";
 
 const POPSTATE_DEBOUNCE_MS = 300;
+
+/**
+ *  Helper outside the component to subscribe to browser URL changes
+ * */
+function subscribeToUrl(callback: () => void) {
+  window.addEventListener("popstate", callback);
+  return () => window.removeEventListener("popstate", callback);
+}
 
 /**
  * Reads and normalizes the `?id=` parcel query parameter from the current browser URL.
@@ -69,7 +77,7 @@ function hasValidCoordinates(
  * @property properties - Optional array of property points/markers to render on the map.
  */
 export interface PropertyExplorerProps {
-  mapProps: MapViewProps;
+  mapProps: Omit<MapViewProps, "mapRef" | "onLoad">;
   polygonProps: PropertyPolygonsProps;
   properties?: Property[];
 }
@@ -84,25 +92,40 @@ export default function PropertyExplorer({
   polygonProps,
   properties,
 }: PropertyExplorerProps) {
+  // Safely reads URL on client after hydration, returns null on server
+  const urlParcelId = useSyncExternalStore(
+    subscribeToUrl,
+    getParcelIdFromUrl,
+    () => null, // Server snapshot for SSR match
+  );
+
   // Tracks state for the currently selected parcel ID (initialized to null for SSR/hydration match)
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [selectedId, setSelectedId] = useState<string | null>(urlParcelId);
+  const prevUrlIdRef = useRef<string | null>(urlParcelId);
   // Controls whether parcel polygons are colored by year built (choropleth)
   const [colorByYearBuilt, setColorByYearBuilt] = useState(false);
   // State for the search query input
   const [searchQuery, setSearchQuery] = useState("");
   const mapRef = useRef<MapRef>(null);
   // Tracks parcel IDs that should trigger a camera flyTo once coordinates resolve
-  const pendingFlyToIdRef = useRef<string | null>(null);
+  const pendingFlyToIdRef = useRef<string | null>(urlParcelId);
   // Holds active 300ms debounce timer for rapid browser Back/Forward (popstate) navigation
   const popstateDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(
     null,
   );
   // Keeps latest polygonProps.onSelect callback accessible inside mount/popstate effects
   const onSelectPropRef = useRef(polygonProps.onSelect);
+  // Tracks when the map is loaded for proper id fly to
+  const [mapLoaded, setMapLoaded] = useState(false);
 
+  // 1. Handle initial mount side effects once
   useEffect(() => {
-    onSelectPropRef.current = polygonProps.onSelect;
-  }, [polygonProps.onSelect]);
+    if (urlParcelId !== null) {
+      pendingFlyToIdRef.current = urlParcelId;
+      onSelectPropRef.current?.(urlParcelId);
+    }
+    // eslint-disable-next-line
+  }, []);
 
   const clearPendingPopstate = () => {
     if (popstateDebounceRef.current !== null) {
@@ -125,43 +148,31 @@ export default function PropertyExplorer({
     loading: addressLoading,
     error: searchError,
   } = useGqlAddressSearch();
-
-  // Hydrates initial `?id=` selection on mount and handles 300ms-debounced browser Back/Forward navigation
   useEffect(() => {
-    const initialId = getParcelIdFromUrl();
-    if (initialId !== null) {
-      pendingFlyToIdRef.current = initialId;
-      setSelectedId(initialId);
-      onSelectPropRef.current?.(initialId);
-    }
+    onSelectPropRef.current = polygonProps.onSelect;
+  }, [polygonProps.onSelect]);
 
-    const handlePopState = () => {
-      if (popstateDebounceRef.current !== null) {
-        clearTimeout(popstateDebounceRef.current);
-      }
-      popstateDebounceRef.current = setTimeout(() => {
-        popstateDebounceRef.current = null;
-        const nextId = getParcelIdFromUrl();
-        pendingFlyToIdRef.current = nextId;
-        setSelectedId(nextId);
-        onSelectPropRef.current?.(nextId);
-      }, POPSTATE_DEBOUNCE_MS);
-    };
+  // Handle 300ms-debounced browser Back/Forward navigation
+  useEffect(() => {
+    // Skip initial mount since useState(urlParcelId) already handled it
+    if (urlParcelId === prevUrlIdRef.current) return;
+    prevUrlIdRef.current = urlParcelId;
 
-    window.addEventListener("popstate", handlePopState);
-    return () => {
-      window.removeEventListener("popstate", handlePopState);
-      if (popstateDebounceRef.current !== null) {
-        clearTimeout(popstateDebounceRef.current);
-        popstateDebounceRef.current = null;
-      }
-    };
-  }, []);
+    clearPendingPopstate();
+    popstateDebounceRef.current = setTimeout(() => {
+      popstateDebounceRef.current = null;
+      pendingFlyToIdRef.current = urlParcelId;
+      setSelectedId(urlParcelId);
+      onSelectPropRef.current?.(urlParcelId);
+    }, POPSTATE_DEBOUNCE_MS);
+
+    return () => clearPendingPopstate();
+  }, [urlParcelId]);
 
   // Executes pending camera flyTo once coordinates resolve, or warns when URL parcel ID cannot be located
   useEffect(() => {
     if (!selectedId || pendingFlyToIdRef.current !== selectedId) return;
-    if (propertyLoading) return;
+    if (propertyLoading || !mapLoaded || !mapRef.current) return;
 
     if (property && property.id === selectedId) {
       pendingFlyToIdRef.current = null;
@@ -187,7 +198,7 @@ export default function PropertyExplorer({
         });
       }
     }
-  }, [selectedId, property, propertyLoading, propertyError]);
+  }, [selectedId, property, propertyLoading, propertyError, mapLoaded]);
 
   // Handles error on address search from GraphQL and displays a toast notification
   useEffect(() => {
@@ -250,6 +261,7 @@ export default function PropertyExplorer({
   const handlePolygonSelect = (id: string | null) => {
     clearPendingPopstate();
     pendingFlyToIdRef.current = null;
+    prevUrlIdRef.current = id; // Keeps ref in sync with pushState
     setSelectedId(id);
     syncParcelIdToUrl(id);
     polygonProps.onSelect?.(id);
@@ -261,7 +273,7 @@ export default function PropertyExplorer({
   const handleClearSelection = () => {
     clearPendingPopstate();
     pendingFlyToIdRef.current = null;
-    setSelectedId(null);
+    prevUrlIdRef.current = null; // Keeps ref in sync with pushState    setSelectedId(null);
     syncParcelIdToUrl(null);
     polygonProps.onSelect?.(null);
   };
@@ -290,7 +302,11 @@ export default function PropertyExplorer({
 
         {/* Interactive canvas, that takes the mapRef for fly to 
         and anything to be rendered in mapbox */}
-        <MapView mapRef={mapRef} {...mapProps}>
+        <MapView
+          {...mapProps}
+          mapRef={mapRef}
+          onLoad={() => setMapLoaded(true)}
+        >
           <PropertyPolygons
             {...polygonProps}
             colorByYearBuilt={colorByYearBuilt}
