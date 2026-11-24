@@ -1,4 +1,10 @@
-import React, { createContext, forwardRef, useContext, useImperativeHandle } from "react";
+import React, {
+  createContext,
+  forwardRef,
+  useContext,
+  useEffect,
+  useImperativeHandle,
+} from "react";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen, waitFor, act } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
@@ -26,6 +32,7 @@ type ListenerFn = (...args: unknown[]) => void;
 
 interface MockMapControllerOptions {
   styleLoaded?: boolean;
+  autoLoad?: boolean;
   registeredSources?: string[];
   registeredLayers?: string[];
 }
@@ -37,6 +44,8 @@ interface MockMapControllerOptions {
  */
 function createMockMapController(options: MockMapControllerOptions = {}) {
   let styleLoaded = options.styleLoaded ?? true;
+  const autoLoad = options.autoLoad ?? styleLoaded;
+  let onLoadCallback: (() => void) | undefined;
   const sources = new Set<string>(options.registeredSources ?? []);
   const layers = new Set<string>(options.registeredLayers ?? []);
   const globalListeners = new Map<string, Set<ListenerFn>>();
@@ -115,6 +124,7 @@ function createMockMapController(options: MockMapControllerOptions = {}) {
 
   return {
     mapInstance,
+    autoLoad,
     on,
     off,
     once,
@@ -124,6 +134,12 @@ function createMockMapController(options: MockMapControllerOptions = {}) {
     queryRenderedFeatures,
     isStyleLoaded,
     getSource,
+    setOnLoadCallback(cb: (() => void) | undefined) {
+      onLoadCallback = cb;
+    },
+    triggerLoad() {
+      onLoadCallback?.();
+    },
     setStyleLoaded(next: boolean) {
       styleLoaded = next;
     },
@@ -162,9 +178,16 @@ vi.mock("react-map-gl/mapbox", () => {
 
   const MockMap = forwardRef<
     MockMapController["mapInstance"],
-    { children?: React.ReactNode }
-  >(function MockMap({ children }, ref) {
+    { children?: React.ReactNode; onLoad?: () => void }
+  >(function MockMap({ children, onLoad }, ref) {
     useImperativeHandle(ref, () => activeController.mapInstance, []);
+    useEffect(() => {
+      activeController.setOnLoadCallback(onLoad);
+      if (activeController.autoLoad) {
+        onLoad?.();
+      }
+      return () => activeController.setOnLoadCallback(undefined);
+    }, [onLoad]);
     return (
       <MapContext.Provider value={{ current: activeController.mapInstance }}>
         <div data-testid="mock-mapbox-map">{children}</div>
@@ -680,14 +703,24 @@ describe("PropertyExplorer — Persistent Parcel Selection & Mapbox Coordination
     act(() => {
       window.history.replaceState(null, "", "/wamap?id=C");
       window.dispatchEvent(new PopStateEvent("popstate"));
+    });
+    act(() => {
       vi.advanceTimersByTime(80);
+    });
 
+    act(() => {
       window.history.replaceState(null, "", "/wamap?id=B");
       window.dispatchEvent(new PopStateEvent("popstate"));
+    });
+    act(() => {
       vi.advanceTimersByTime(80);
+    });
 
+    act(() => {
       window.history.replaceState(null, "", "/wamap?id=A");
       window.dispatchEvent(new PopStateEvent("popstate"));
+    });
+    act(() => {
       vi.advanceTimersByTime(299);
     });
 
@@ -713,12 +746,41 @@ describe("PropertyExplorer — Persistent Parcel Selection & Mapbox Coordination
     act(() => {
       window.history.replaceState(null, "", "/wamap");
       window.dispatchEvent(new PopStateEvent("popstate"));
+    });
+    act(() => {
       vi.advanceTimersByTime(300);
     });
 
     expect(screen.getByText("No Property Selected")).toBeInTheDocument();
     expect(activeController.flyTo).not.toHaveBeenCalled();
     expect(toast.warning).not.toHaveBeenCalled();
+  });
+
+  it("defers initial-load flyTo until Mapbox fires onLoad", () => {
+    window.history.replaceState(null, "", "/wamap?id=A");
+    activeController = createMockMapController({
+      styleLoaded: false,
+      autoLoad: false,
+      registeredSources: ["uw-parcels"],
+      registeredLayers: ["uw-parcels-fill"],
+    });
+
+    renderExplorer(GEOJSON_POLYGON_PROPS);
+
+    expect(screen.getByText("Campus Lofts A")).toBeInTheDocument();
+    expect(activeController.flyTo).not.toHaveBeenCalled();
+
+    act(() => {
+      activeController.setStyleLoaded(true);
+      activeController.triggerLoad();
+    });
+
+    expect(activeController.flyTo).toHaveBeenCalledTimes(1);
+    expect(activeController.flyTo).toHaveBeenCalledWith({
+      center: [-122.3125, 47.6605],
+      zoom: 17,
+      duration: 2000,
+    });
   });
 
   it("cancels a pending popstate debounce timer if the user clicks a polygon before 300ms elapses", () => {

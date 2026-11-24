@@ -172,17 +172,19 @@ export default function PropertyExplorer({
   // Executes pending camera flyTo once coordinates resolve, or warns when URL parcel ID cannot be located
   useEffect(() => {
     if (!selectedId || pendingFlyToIdRef.current !== selectedId) return;
-    if (propertyLoading || !mapLoaded || !mapRef.current) return;
+    if (propertyLoading) return;
 
     if (property && property.id === selectedId) {
-      pendingFlyToIdRef.current = null;
       if (hasValidCoordinates(property)) {
-        mapRef.current?.flyTo({
+        if (!mapLoaded || !mapRef.current) return;
+        pendingFlyToIdRef.current = null;
+        mapRef.current.flyTo({
           center: [property.longitude, property.latitude],
           zoom: 17,
           duration: 2000,
         });
       } else {
+        pendingFlyToIdRef.current = null;
         toast.warning("Parcel location unavailable", {
           description: `Coordinates are unavailable for parcel "${selectedId}". Showing default map view.`,
         });
@@ -273,7 +275,8 @@ export default function PropertyExplorer({
   const handleClearSelection = () => {
     clearPendingPopstate();
     pendingFlyToIdRef.current = null;
-    prevUrlIdRef.current = null; // Keeps ref in sync with pushState    setSelectedId(null);
+    prevUrlIdRef.current = null; // Keeps ref in sync with pushState
+    setSelectedId(null);
     syncParcelIdToUrl(null);
     polygonProps.onSelect?.(null);
   };

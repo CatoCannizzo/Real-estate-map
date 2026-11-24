@@ -11,12 +11,16 @@ const mockFlyTo = vi.fn();
 // - useMap() returns { current: null } so PropertyPolygons safely skips imperative WebGL canvas hooks
 vi.mock("react-map-gl/mapbox", () => ({
   default: React.forwardRef(function MockMap(
-    { children }: { children?: React.ReactNode },
+    { children, onLoad }: { children?: React.ReactNode; onLoad?: () => void },
     ref: React.Ref<{ flyTo: typeof mockFlyTo }>,
   ) {
     React.useImperativeHandle(ref, () => ({
       flyTo: mockFlyTo,
     }));
+    React.useEffect(() => {
+      onLoad?.();
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     return <div data-testid="mapbox-map">{children}</div>;
   }),
   Source: ({ children, id }: { children?: React.ReactNode; id: string }) => (
