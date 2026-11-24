@@ -42,7 +42,7 @@ export default function WaMapPage() {
   };
 
   return (
-    <div className="h-full w-full">
+    <div className="h-[calc(100svh-4rem)] w-full overflow-hidden">
       <PropertyExplorer
         mapProps={mapviewProps}
         polygonProps={UW_POLYGON_PROPS}

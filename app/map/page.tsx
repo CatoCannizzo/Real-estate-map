@@ -59,7 +59,7 @@ export default function MapPage() {
   };
 
   return (
-    <div className="h-full w-full">
+    <div className="h-[calc(100svh-4rem)] w-full overflow-hidden">
       <PropertyExplorer
         mapProps={mapviewProps}
         polygonProps={MANHATTAN_POLYGON_PROPS}

@@ -100,8 +100,8 @@ export default function PropertyExplorer({
   };
 
   return (
-    <div className="flex h-full w-full overflow-hidden">
-      <div className="relative flex-1 h-full min-w-0">
+    <div className="flex h-full min-h-0 w-full overflow-hidden">
+      <div className="relative flex-1 h-full min-h-0 min-w-0">
         {/* A search bar that defaults to right side to prevent overlap 
         with deprecated load button that retrieves some property data */}
         <div className="absolute z-20 top-16 left-4 right-4 sm:top-4 sm:left-auto sm:right-4 sm:w-80 max-w-sm">
@@ -137,7 +137,7 @@ export default function PropertyExplorer({
         </MapView>
 
         {/* Floating Year Built choropleth toggle and color scale legend */}
-        <div className="absolute z-10 bottom-8 left-4">
+        <div className="absolute z-20 bottom-8 left-4 pointer-events-auto">
           <YearBuiltLegend
             active={colorByYearBuilt}
             onToggle={setColorByYearBuilt}
