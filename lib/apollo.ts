@@ -4,5 +4,11 @@ export const client = new ApolloClient({
   link: new HttpLink({
     uri: "https://graphql.eng.meridiancapital.com/graphql",
   }),
-  cache: new InMemoryCache(),
+  cache: new InMemoryCache({
+    typePolicies: {
+      ReonomyProperty: {
+        keyFields: ["parcel_id"],
+      },
+    },
+  }),
 });
