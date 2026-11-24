@@ -1,6 +1,24 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import {
+  STREET_VIEW_MAX_CACHE_BYTES,
+  cacheStreetViewBlob,
+  cacheStreetViewNoCoverage,
+  getStreetViewCacheEntry,
+  getStreetViewCacheStats,
+  hasStreetViewCacheEntry,
+  resetStreetViewCache,
+  type StreetViewCacheEntry,
+} from "@/components/map/street-view-cache";
+
+export {
+  STREET_VIEW_MAX_CACHE_BYTES,
+  getStreetViewCacheEntry,
+  getStreetViewCacheStats,
+  resetStreetViewCache,
+  type StreetViewCacheEntry,
+};
 
 /** Native dimensions requested from Google Street View Static API (16:9 aspect ratio) */
 export const STREET_VIEW_DIMENSIONS = {
@@ -21,22 +39,18 @@ export interface UseStreetViewImageOptions {
   latitude: number | null | undefined;
   longitude: number | null | undefined;
   address?: string;
-  /** Whether live Google Street View fetching is active (false = deterministic mock) */
+  /** Whether live Google Street View fetching is active (false = uncached deterministic mock) */
   liveEnabled: boolean;
   /** Optional API key override; defaults to NEXT_PUBLIC_GOOGLE_MAPS_KEY */
   apiKey?: string;
+  /** Optional cache byte ceiling override (defaults to 5 MB) */
+  maxCacheBytes?: number;
 }
 
 export interface UseStreetViewImageResult {
   status: StreetViewStatus;
   imageUrl: string | null;
   isMock: boolean;
-}
-
-function safeRevokeObjectUrl(url: string): void {
-  if (typeof URL !== "undefined" && typeof URL.revokeObjectURL === "function") {
-    URL.revokeObjectURL(url);
-  }
 }
 
 /**
@@ -132,15 +146,12 @@ export function createMockStreetViewDataUrl(params: {
   return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
 }
 
-interface LiveResolutionState {
-  requestKey: string;
-  status: "ready" | "no_coverage" | "error";
-  imageUrl: string | null;
-}
-
 /**
- * Fetches a single 640x360 Street View image per parcel in live mode,
- * or returns a deterministic local SVG preview when `liveEnabled` is false.
+ * Resolves a single 640x360 Street View image per parcel:
+ * - When `liveEnabled` is false (dev default), returns an uncached deterministic SVG mock.
+ * - When `liveEnabled` is true, serves from or populates a 5 MB FIFO Blob cache,
+ *   records HTTP 404 responses as `no_coverage` in the cache, and leaves transient
+ *   fetch/network errors uncached so future selections can retry.
  */
 export function useStreetViewImage({
   parcelId,
@@ -149,6 +160,7 @@ export function useStreetViewImage({
   address,
   liveEnabled,
   apiKey,
+  maxCacheBytes = STREET_VIEW_MAX_CACHE_BYTES,
 }: UseStreetViewImageOptions): UseStreetViewImageResult {
   const normalizedParcelId = parcelId?.trim() || null;
   const coordsValid = hasValidStreetViewCoordinates(latitude, longitude);
@@ -158,9 +170,10 @@ export function useStreetViewImage({
     ""
   ).trim();
 
-  const [resolution, setResolution] = useState<LiveResolutionState | null>(
-    null,
-  );
+  // Triggers re-render after async cache population completes
+  const [, setCacheRevision] = useState(0);
+  // Tracks the requestKey of the latest uncached transient fetch error
+  const [errorRequestKey, setErrorRequestKey] = useState<string | null>(null);
 
   const requestKey =
     normalizedParcelId && coordsValid && liveEnabled && resolvedApiKey
@@ -172,8 +185,12 @@ export function useStreetViewImage({
       return;
     }
 
+    // Short-circuit immediately on FIFO cache hit (either image or known 404 no_coverage)
+    if (hasStreetViewCacheEntry(normalizedParcelId)) {
+      return;
+    }
+
     const controller = new AbortController();
-    let createdObjectUrl: string | null = null;
     const url = buildStreetViewStaticUrl(
       latitude as number,
       longitude as number,
@@ -181,53 +198,44 @@ export function useStreetViewImage({
     );
 
     const fetchImage = async () => {
+      await Promise.resolve();
+      if (controller.signal.aborted) return;
+
+      // Clear any previous transient error if re-attempting this parcel
+      setErrorRequestKey((prev) => (prev === requestKey ? null : prev));
+
       try {
         const res = await fetch(url, { signal: controller.signal });
         if (controller.signal.aborted) return;
 
         if (res.status === 404) {
-          setResolution({
-            requestKey,
-            status: "no_coverage",
-            imageUrl: null,
-          });
+          cacheStreetViewNoCoverage(normalizedParcelId, maxCacheBytes);
+          setCacheRevision((rev) => rev + 1);
           return;
         }
 
         if (!res.ok) {
-          setResolution({
-            requestKey,
-            status: "error",
-            imageUrl: null,
-          });
+          setErrorRequestKey(requestKey);
           return;
         }
 
         const blob = await res.blob();
-        if (controller.signal.aborted || blob.size <= 0) {
-          if (!controller.signal.aborted) {
-            setResolution({
-              requestKey,
-              status: "error",
-              imageUrl: null,
-            });
-          }
+        if (controller.signal.aborted) return;
+
+        const cached = cacheStreetViewBlob(
+          normalizedParcelId,
+          blob,
+          maxCacheBytes,
+        );
+        if (!cached) {
+          setErrorRequestKey(requestKey);
           return;
         }
 
-        createdObjectUrl = URL.createObjectURL(blob);
-        setResolution({
-          requestKey,
-          status: "ready",
-          imageUrl: createdObjectUrl,
-        });
+        setCacheRevision((rev) => rev + 1);
       } catch {
         if (controller.signal.aborted) return;
-        setResolution({
-          requestKey,
-          status: "error",
-          imageUrl: null,
-        });
+        setErrorRequestKey(requestKey);
       }
     };
 
@@ -235,16 +243,22 @@ export function useStreetViewImage({
 
     return () => {
       controller.abort();
-      if (createdObjectUrl) {
-        safeRevokeObjectUrl(createdObjectUrl);
-      }
     };
-  }, [requestKey, normalizedParcelId, coordsValid, latitude, longitude, resolvedApiKey]);
+  }, [
+    requestKey,
+    normalizedParcelId,
+    coordsValid,
+    latitude,
+    longitude,
+    resolvedApiKey,
+    maxCacheBytes,
+  ]);
 
   if (!normalizedParcelId || !coordsValid) {
     return { status: "idle", imageUrl: null, isMock: false };
   }
 
+  // Dev mock mode: zero network calls and zero cache reads/writes
   if (!liveEnabled) {
     return {
       status: "mock",
@@ -258,16 +272,29 @@ export function useStreetViewImage({
     };
   }
 
+  // Live mode without an API key configured fails silently
   if (!resolvedApiKey) {
     return { status: "error", imageUrl: null, isMock: false };
   }
 
-  if (resolution && resolution.requestKey === requestKey) {
+  const cachedEntry = getStreetViewCacheEntry(normalizedParcelId);
+  if (cachedEntry) {
+    if (cachedEntry.kind === "image") {
+      return {
+        status: "ready",
+        imageUrl: cachedEntry.objectUrl,
+        isMock: false,
+      };
+    }
     return {
-      status: resolution.status,
-      imageUrl: resolution.imageUrl,
+      status: "no_coverage",
+      imageUrl: null,
       isMock: false,
     };
+  }
+
+  if (requestKey && errorRequestKey === requestKey) {
+    return { status: "error", imageUrl: null, isMock: false };
   }
 
   return { status: "loading", imageUrl: null, isMock: false };
