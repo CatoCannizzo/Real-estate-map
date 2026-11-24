@@ -1,6 +1,6 @@
 "use client";
 
-import type { ReactNode } from "react";
+import { useId, useState, type InputHTMLAttributes, type ReactNode } from "react";
 import {
   Building2,
   Calendar,
@@ -16,6 +16,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { PropertyStreetViewCard } from "@/components/map/property-street-view-card";
 import type { Property } from "@/components/map/property-type";
 
 /** Props for the slide-out property detail sidebar */
@@ -24,6 +25,8 @@ export interface PropertySidebarProps {
   property?: Property | null;
   loading?: boolean;
   onClose?: () => void;
+  /** Optional environment override for testing; defaults to process.env.NODE_ENV !== "production" */
+  isDevMode?: boolean;
 }
 
 export interface CardFieldItem {
@@ -142,13 +145,20 @@ export function PropertyDetailCard({
   );
 }
 
-/** Displays full parcel details, building specs, valuation, and past sales in a sidebar */
+/** Displays full parcel details, Street View imagery, building specs, valuation, and past sales in a sidebar */
 export function PropertySidebar({
   selectedId,
   property,
   loading = false,
   onClose,
+  isDevMode,
 }: PropertySidebarProps) {
+  const resolvedIsDevMode =
+    isDevMode ?? process.env.NODE_ENV !== "production";
+  const [devLiveStreetView, setDevLiveStreetView] = useState(false);
+  const liveStreetViewSwitchId = useId();
+  const liveStreetViewEnabled = resolvedIsDevMode ? devLiveStreetView : true;
+
   // Sorts sales transactions chronologically from newest to oldest
   const sortedSales = property?.salesHistory
     ? [...property.salesHistory].sort((a, b) => {
@@ -240,26 +250,57 @@ export function PropertySidebar({
       ]
     : [];
 
+  const [overviewCard, ...secondaryDetailCards] = detailCards;
+
   return (
     <aside className="w-80 shrink-0 h-full border-l border-border bg-card flex flex-col overflow-y-auto">
-      <div className="flex items-center justify-between p-4 border-b border-border/60 sticky top-0 bg-card/95 backdrop-blur z-10">
-        <div className="flex items-center gap-2">
-          <Building2 className="size-4 text-primary" />
-          <h2 className="font-semibold text-sm tracking-tight">
-            Property Details
-          </h2>
+      <div className="sticky top-0 z-10 border-b border-border/60 bg-card/95 backdrop-blur">
+        <div className="flex items-center justify-between p-4">
+          <div className="flex items-center gap-2">
+            <Building2 aria-hidden="true" className="size-4 text-primary" />
+            <h2 className="font-semibold text-sm tracking-tight">
+              Property Details
+            </h2>
+          </div>
+          {selectedId && onClose ? (
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              onClick={onClose}
+              aria-label="Clear selection"
+              className="size-7 text-muted-foreground hover:text-foreground"
+            >
+              <X aria-hidden="true" className="size-4" />
+            </Button>
+          ) : null}
         </div>
-        {selectedId && onClose && (
-          <Button
-            variant="ghost"
-            size="icon-sm"
-            onClick={onClose}
-            aria-label="Clear selection"
-            className="size-7 text-muted-foreground hover:text-foreground"
-          >
-            <X className="size-4" />
-          </Button>
-        )}
+
+        {resolvedIsDevMode ? (
+          <div className="flex items-center justify-between gap-2 border-t border-border/50 bg-muted/40 px-4 py-2 text-xs">
+            <div className="flex items-center gap-1.5">
+              <label
+                htmlFor={liveStreetViewSwitchId}
+                className="cursor-pointer font-medium text-muted-foreground select-none"
+              >
+                Live Street View
+              </label>
+              <Badge
+                variant={devLiveStreetView ? "default" : "secondary"}
+                className="px-1.5 py-0 text-[10px]"
+              >
+                {devLiveStreetView ? "Live" : "Mock"}
+              </Badge>
+            </div>
+            <input
+              id={liveStreetViewSwitchId}
+              type="checkbox"
+              {...({ switch: "" } as InputHTMLAttributes<HTMLInputElement>)}
+              checked={devLiveStreetView}
+              onChange={(e) => setDevLiveStreetView(e.target.checked)}
+              className="size-4 cursor-pointer accent-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+            />
+          </div>
+        ) : null}
       </div>
 
       <div className="flex-1 p-4 space-y-4">
@@ -338,8 +379,18 @@ export function PropertySidebar({
               </div>
             </div>
 
-            {/* Data-Driven Detail Cards */}
-            {detailCards.map((cardConfig) => (
+            {/* Tier 2: Overview Card */}
+            {overviewCard ? <PropertyDetailCard {...overviewCard} /> : null}
+
+            {/* Tier 3: Street View Preview & Expandable Modal Card */}
+            <PropertyStreetViewCard
+              key={property.id}
+              property={property}
+              liveEnabled={liveStreetViewEnabled}
+            />
+
+            {/* Remaining Data-Driven Detail Cards (Building & Lot, Assessor Valuation) */}
+            {secondaryDetailCards.map((cardConfig) => (
               <PropertyDetailCard key={cardConfig.title} {...cardConfig} />
             ))}
 
