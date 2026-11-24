@@ -17,34 +17,100 @@ import { usePropertyDetails } from "@/components/map/use-property-details";
 import { useGqlAddressSearch } from "@/components/map/use-gql-address-search";
 import type { AddressSearchItem } from "@/lib/graphql/queries";
 
+const POPSTATE_DEBOUNCE_MS = 300;
+
+/**
+ * Reads and normalizes the `?id=` parcel query parameter from the current browser URL.
+ */
+export function getParcelIdFromUrl(): string | null {
+  if (typeof window === "undefined") return null;
+  const raw = new URLSearchParams(window.location.search).get("id")?.trim();
+  return raw ? raw : null;
+}
+
+/**
+ * Synchronizes the active parcel ID to the browser URL `?id=` query parameter
+ * via `window.history.pushState` without reloading the page or pushing duplicate entries.
+ */
+export function syncParcelIdToUrl(id: string | null): void {
+  if (typeof window === "undefined") return;
+  const normalizedId = id?.trim() || null;
+  if (getParcelIdFromUrl() === normalizedId) return;
+
+  const url = new URL(window.location.href);
+  if (normalizedId !== null) {
+    url.searchParams.set("id", normalizedId);
+  } else {
+    url.searchParams.delete("id");
+  }
+  window.history.pushState(null, "", `${url.pathname}${url.search}${url.hash}`);
+}
+
+/**
+ * Checks whether a resolved `Property` record has finite, non-zero coordinates suitable for `flyTo`.
+ */
+function hasValidCoordinates(
+  property: Property | null | undefined,
+): property is Property {
+  if (!property) return false;
+  const { latitude, longitude } = property;
+  return (
+    Number.isFinite(latitude) &&
+    Number.isFinite(longitude) &&
+    (latitude !== 0 || longitude !== 0)
+  );
+}
+
 /**
  * Props for the {@link PropertyExplorer} component.
  *
  * @property mapProps - Configuration and event callbacks for the base MapView.
  * @property polygonProps - Layer configuration and selection handler for parcel boundaries.
  * @property properties - Optional array of property points/markers to render on the map.
- */ export interface PropertyExplorerProps {
+ */
+export interface PropertyExplorerProps {
   mapProps: MapViewProps;
   polygonProps: PropertyPolygonsProps;
   properties?: Property[];
 }
+
 /**
  * Main coordinator component managing real estate map exploration.
  * Integrates address search autocomplete, Mapbox polygon layer interaction,
- * camera navigation, and the property details sidebar.
+ * URL query parameter (`?id=`) persistence, camera navigation, and the property details sidebar.
  */
 export default function PropertyExplorer({
   mapProps,
   polygonProps,
   properties,
 }: PropertyExplorerProps) {
-  // Tracks state for the currently selected parcel ID
+  // Tracks state for the currently selected parcel ID (initialized to null for SSR/hydration match)
   const [selectedId, setSelectedId] = useState<string | null>(null);
   // Controls whether parcel polygons are colored by year built (choropleth)
   const [colorByYearBuilt, setColorByYearBuilt] = useState(false);
   // State for the search query input
   const [searchQuery, setSearchQuery] = useState("");
   const mapRef = useRef<MapRef>(null);
+  // Tracks parcel IDs that should trigger a camera flyTo once coordinates resolve
+  const pendingFlyToIdRef = useRef<string | null>(null);
+  // Holds active 300ms debounce timer for rapid browser Back/Forward (popstate) navigation
+  const popstateDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(
+    null,
+  );
+  // Keeps latest polygonProps.onSelect callback accessible inside mount/popstate effects
+  const onSelectPropRef = useRef(polygonProps.onSelect);
+
+  useEffect(() => {
+    onSelectPropRef.current = polygonProps.onSelect;
+  }, [polygonProps.onSelect]);
+
+  const clearPendingPopstate = () => {
+    if (popstateDebounceRef.current !== null) {
+      clearTimeout(popstateDebounceRef.current);
+      popstateDebounceRef.current = null;
+    }
+  };
+
   // Selects parcel details whenever a new parcel ID is updated
   const {
     property,
@@ -59,6 +125,69 @@ export default function PropertyExplorer({
     loading: addressLoading,
     error: searchError,
   } = useGqlAddressSearch();
+
+  // Hydrates initial `?id=` selection on mount and handles 300ms-debounced browser Back/Forward navigation
+  useEffect(() => {
+    const initialId = getParcelIdFromUrl();
+    if (initialId !== null) {
+      pendingFlyToIdRef.current = initialId;
+      setSelectedId(initialId);
+      onSelectPropRef.current?.(initialId);
+    }
+
+    const handlePopState = () => {
+      if (popstateDebounceRef.current !== null) {
+        clearTimeout(popstateDebounceRef.current);
+      }
+      popstateDebounceRef.current = setTimeout(() => {
+        popstateDebounceRef.current = null;
+        const nextId = getParcelIdFromUrl();
+        pendingFlyToIdRef.current = nextId;
+        setSelectedId(nextId);
+        onSelectPropRef.current?.(nextId);
+      }, POPSTATE_DEBOUNCE_MS);
+    };
+
+    window.addEventListener("popstate", handlePopState);
+    return () => {
+      window.removeEventListener("popstate", handlePopState);
+      if (popstateDebounceRef.current !== null) {
+        clearTimeout(popstateDebounceRef.current);
+        popstateDebounceRef.current = null;
+      }
+    };
+  }, []);
+
+  // Executes pending camera flyTo once coordinates resolve, or warns when URL parcel ID cannot be located
+  useEffect(() => {
+    if (!selectedId || pendingFlyToIdRef.current !== selectedId) return;
+    if (propertyLoading) return;
+
+    if (property && property.id === selectedId) {
+      pendingFlyToIdRef.current = null;
+      if (hasValidCoordinates(property)) {
+        mapRef.current?.flyTo({
+          center: [property.longitude, property.latitude],
+          zoom: 17,
+          duration: 2000,
+        });
+      } else {
+        toast.warning("Parcel location unavailable", {
+          description: `Coordinates are unavailable for parcel "${selectedId}". Showing default map view.`,
+        });
+      }
+      return;
+    }
+
+    if (!property) {
+      pendingFlyToIdRef.current = null;
+      if (!propertyError) {
+        toast.warning("Parcel not found", {
+          description: `No coordinates or property records were found for parcel "${selectedId}". Showing default map view.`,
+        });
+      }
+    }
+  }, [selectedId, property, propertyLoading, propertyError]);
 
   // Handles error on address search from GraphQL and displays a toast notification
   useEffect(() => {
@@ -81,22 +210,60 @@ export default function PropertyExplorer({
       });
     }
   }, [propertyError]);
+
   /**
    * Handles user selection of an address suggestion from the search dropdown:
-   * updates the search input, selects the parcel ID, syncs with polygon layers,
-   * and animates the map camera to the target coordinates.
+   * updates the search input, persists `?id=` in the URL, selects the parcel ID,
+   * and schedules a camera flight once property coordinates resolve.
    *
    * @param item - The selected address item containing coordinate and parcel data.
    */
   const handleSelectAddress = (item: AddressSearchItem) => {
+    clearPendingPopstate();
     setSearchQuery(item.address_line1);
-    setSelectedId(item.parcel_id);
+    syncParcelIdToUrl(item.parcel_id);
     polygonProps.onSelect?.(item.parcel_id);
-    mapRef.current?.flyTo({
-      center: [item.lon, item.lat],
-      zoom: 17,
-      duration: 2000,
-    });
+
+    if (
+      selectedId === item.parcel_id &&
+      !propertyLoading &&
+      property?.id === item.parcel_id &&
+      hasValidCoordinates(property)
+    ) {
+      pendingFlyToIdRef.current = null;
+      mapRef.current?.flyTo({
+        center: [property.longitude, property.latitude],
+        zoom: 17,
+        duration: 2000,
+      });
+      return;
+    }
+
+    pendingFlyToIdRef.current = item.parcel_id;
+    setSelectedId(item.parcel_id);
+  };
+
+  /**
+   * Handles direct parcel polygon clicks on the map canvas:
+   * updates selection state and `?id=` URL parameter while keeping the map camera stationary.
+   */
+  const handlePolygonSelect = (id: string | null) => {
+    clearPendingPopstate();
+    pendingFlyToIdRef.current = null;
+    setSelectedId(id);
+    syncParcelIdToUrl(id);
+    polygonProps.onSelect?.(id);
+  };
+
+  /**
+   * Clears the active parcel selection and removes `?id=` from the URL without moving the camera.
+   */
+  const handleClearSelection = () => {
+    clearPendingPopstate();
+    pendingFlyToIdRef.current = null;
+    setSelectedId(null);
+    syncParcelIdToUrl(null);
+    polygonProps.onSelect?.(null);
   };
 
   return (
@@ -128,10 +295,7 @@ export default function PropertyExplorer({
             {...polygonProps}
             colorByYearBuilt={colorByYearBuilt}
             selectedId={selectedId}
-            onSelect={(id) => {
-              setSelectedId(id);
-              polygonProps.onSelect?.(id);
-            }}
+            onSelect={handlePolygonSelect}
           />
           {properties && <PropertyMarkers properties={properties} />}
         </MapView>
@@ -149,7 +313,7 @@ export default function PropertyExplorer({
         selectedId={selectedId}
         property={property}
         loading={propertyLoading}
-        onClose={() => setSelectedId(null)}
+        onClose={handleClearSelection}
       />
     </div>
   );
